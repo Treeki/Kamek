@@ -1,5 +1,6 @@
 #include "k_stdlib/kamek.h"
 
+
 kmWrite32(0x80123456, 0x99998888);
 kmWrite32(0x80123456, 0x99998888);
 kmWrite32(0x80123456, 0x99998888);
@@ -32,8 +33,7 @@ int namedFn(int value)
 }
 kmBranch(0x80B6C488, namedFn);
 
-
-kmMakeBranch(0x80B6C488, NULL, int, int state)
+kmBranchDefCpp(0x80B6C488, NULL, int, int state)
 {
 	foo();
 	foo();
@@ -41,7 +41,7 @@ kmMakeBranch(0x80B6C488, NULL, int, int state)
 	return state;
 }
 
-kmMakeAsmBranch(0x80B6C488, 0x80B6C48C)
+kmBranchDefAsm(0x80B6C488, 0x80B6C48C)
 {
 	li r5, 1;
 }

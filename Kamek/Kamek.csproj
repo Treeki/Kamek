@@ -41,6 +41,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\RelocCommand.cs" />
+    <Compile Include="Word.cs" />
+    <Compile Include="Commands\Command.cs" />
+    <Compile Include="Commands\WriteCommand.cs" />
+    <Compile Include="Hooks\BranchHook.cs" />
+    <Compile Include="Hooks\Hook.cs" />
+    <Compile Include="Hooks\PatchExitHook.cs" />
+    <Compile Include="Hooks\WriteHook.cs" />
+    <Compile Include="KamekFile.cs" />
     <Compile Include="Linker.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Elf.cs" />

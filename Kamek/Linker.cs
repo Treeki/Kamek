@@ -9,67 +9,6 @@ namespace Kamek
 {
     class Linker
     {
-        public struct Address
-        {
-            public readonly bool IsAbsolute;
-            public readonly uint Addr;
-
-            public Address(bool IsAbsolute, uint Addr)
-            {
-                this.IsAbsolute = IsAbsolute;
-                this.Addr = Addr;
-            }
-
-            #region Address Arithmetic Operators
-            public static Address operator+(Address a, long addend)
-            {
-                return new Address(a.IsAbsolute, (uint)(a.Addr + addend));
-            }
-            public static long operator-(Address a, Address b)
-            {
-                if (a.IsAbsolute != b.IsAbsolute)
-                    throw new InvalidOperationException("cannot perform arithmetic on an absolute and a relative address");
-                return a.Addr - b.Addr;
-            }
-            #endregion
-
-            #region Address Comparison Operators
-            public static bool operator<(Address a, Address b)
-            {
-                if (a.IsAbsolute != b.IsAbsolute)
-                    throw new InvalidOperationException("cannot compare an absolute and a relative address");
-                return a.Addr < b.Addr;
-            }
-            public static bool operator>(Address a, Address b)
-            {
-                if (a.IsAbsolute != b.IsAbsolute)
-                    throw new InvalidOperationException("cannot compare an absolute and a relative address");
-                return a.Addr > b.Addr;
-            }
-            public static bool operator<=(Address a, Address b)
-            {
-                if (a.IsAbsolute != b.IsAbsolute)
-                    throw new InvalidOperationException("cannot compare an absolute and a relative address");
-                return a.Addr <= b.Addr;
-            }
-            public static bool operator>=(Address a, Address b)
-            {
-                if (a.IsAbsolute != b.IsAbsolute)
-                    throw new InvalidOperationException("cannot compare an absolute and a relative address");
-                return a.Addr >= b.Addr;
-            }
-            #endregion
-
-            public override string ToString()
-            {
-                if (IsAbsolute)
-                    return string.Format("<Address 0x{0:X}>", Addr);
-                else
-                    return string.Format("<Address Base+0x{0:X}>", Addr);
-            }
-        }
-
-
         private bool _linked = false;
         private List<Elf> _modules = new List<Elf>();
 
@@ -85,16 +24,13 @@ namespace Kamek
 
         public void LinkStatic(uint baseAddress, Dictionary<string, uint> externalSymbols)
         {
-            _baseAddress = new Address(true, baseAddress);
+            _baseAddress = new Word(WordType.AbsoluteAddr, baseAddress);
             _externalSymbols = externalSymbols;
             DoLink();
-
-            if (_fixups.Count != 0)
-                throw new InvalidOperationException("static link somehow resulted in fixups");
         }
         public void LinkDynamic(Dictionary<String, uint> externalSymbols)
         {
-            _baseAddress = new Address(false, 0);
+            _baseAddress = new Word(WordType.RelativeAddr, 0);
             _externalSymbols = externalSymbols;
             DoLink();
         }
@@ -108,30 +44,32 @@ namespace Kamek
             CollectSections();
             BuildSymbolTables();
             ProcessRelocations();
-            ExtractKamekData();
+            ProcessHooks();
         }
 
 
 
-        private Address _baseAddress;
-        private Address _ctorStart, _ctorEnd;
-        private Address _outputStart, _outputEnd;
-        private Address _bssStart, _bssEnd;
-        private Address _kamekStart, _kamekEnd;
-        private byte[] _output = null;
+        private Word _baseAddress;
+        private Word _ctorStart, _ctorEnd;
+        private Word _outputStart, _outputEnd;
+        private Word _bssStart, _bssEnd;
+        private Word _kamekStart, _kamekEnd;
+        private byte[] _memory = null;
 
-        public Address BaseAddress { get { return _baseAddress; } }
-        public Address CtorStart { get { return _ctorStart; } }
-        public Address CtorEnd { get { return _ctorEnd; } }
-        public byte[] Output { get { return _output; } }
+        public Word BaseAddress { get { return _baseAddress; } }
+        public Word CtorStart { get { return _ctorStart; } }
+        public Word CtorEnd { get { return _ctorEnd; } }
+        public Word OutputStart { get { return _outputStart; } }
+        public Word OutputEnd { get { return _outputEnd; } }
+        public byte[] Memory { get { return _memory; } }
         public long BssSize { get { return _bssEnd - _bssStart; } }
 
 
         #region Collecting Sections
         private List<byte[]> _binaryBlobs = new List<byte[]>();
-        private Dictionary<Elf.ElfSection, Address> _sectionBases = new Dictionary<Elf.ElfSection, Address>();
+        private Dictionary<Elf.ElfSection, Word> _sectionBases = new Dictionary<Elf.ElfSection, Word>();
 
-        private Address _location;
+        private Word _location;
 
         private void ImportSections(string prefix)
         {
@@ -150,9 +88,9 @@ namespace Kamek
                     _location += s.sh_size;
 
                     // Align to 4 bytes
-                    if ((_location.Addr % 4) != 0)
+                    if ((_location.Value % 4) != 0)
                     {
-                        long alignment = 4 - (_location.Addr % 4);
+                        long alignment = 4 - (_location.Value % 4);
                         _binaryBlobs.Add(new byte[alignment]);
                         _location += alignment;
                     }
@@ -185,11 +123,11 @@ namespace Kamek
             _kamekEnd = _location;
 
             // Create one big blob from this
-            _output = new byte[_location - _baseAddress];
+            _memory = new byte[_location - _baseAddress];
             int position = 0;
             foreach (var blob in _binaryBlobs)
             {
-                Array.Copy(blob, 0, _output, position, blob.Length);
+                Array.Copy(blob, 0, _memory, position, blob.Length);
                 position += blob.Length;
             }
         }
@@ -197,21 +135,21 @@ namespace Kamek
 
 
         #region Result Binary Manipulation
-        private ushort ReadUInt16(Address addr)
+        private ushort ReadUInt16(Word addr)
         {
-            return Util.ExtractUInt16(_output, addr - _baseAddress);
+            return Util.ExtractUInt16(_memory, addr - _baseAddress);
         }
-        private uint ReadUInt32(Address addr)
+        private uint ReadUInt32(Word addr)
         {
-            return Util.ExtractUInt32(_output, addr - _baseAddress);
+            return Util.ExtractUInt32(_memory, addr - _baseAddress);
         }
-        private void WriteUInt16(Address addr, ushort value)
+        private void WriteUInt16(Word addr, ushort value)
         {
-            Util.InjectUInt16(_output, addr - _baseAddress, value);
+            Util.InjectUInt16(_memory, addr - _baseAddress, value);
         }
-        private void WriteUInt32(Address addr, uint value)
+        private void WriteUInt32(Word addr, uint value)
         {
-            Util.InjectUInt32(_output, addr - _baseAddress, value);
+            Util.InjectUInt32(_memory, addr - _baseAddress, value);
         }
         #endregion
 
@@ -219,7 +157,7 @@ namespace Kamek
         #region Symbol Tables
         private struct Symbol
         {
-            public Address address;
+            public Word address;
             public uint size;
             public bool isWeak;
         }
@@ -301,11 +239,11 @@ namespace Kamek
                 else
                     throw new InvalidDataException("unknown section index found in symbol table");
 
-                Address addr;
+                Word addr;
                 if (st_shndx == 0xFFF1)
                 {
                     // Absolute symbol
-                    addr = new Address(true, st_value);
+                    addr = new Word(WordType.AbsoluteAddr, st_value);
                 }
                 else if (st_shndx < 0xFF00)
                 {
@@ -352,7 +290,7 @@ namespace Kamek
             if (_globalSymbols.ContainsKey(name))
                 return _globalSymbols[name];
             if (_externalSymbols.ContainsKey(name))
-                return new Symbol { address = new Address(true, _externalSymbols[name]) };
+                return new Symbol { address = new Word(WordType.AbsoluteAddr, _externalSymbols[name]) };
 
             throw new InvalidDataException("undefined symbol " + name);
         }
@@ -363,7 +301,7 @@ namespace Kamek
         public struct Fixup
         {
             public Elf.Reloc type;
-            public Address source, dest;
+            public Word source, dest;
         }
         private List<Fixup> _fixups = new List<Fixup>();
         public IList<Fixup> Fixups { get { return _fixups; } }
@@ -425,93 +363,22 @@ namespace Kamek
                 string symName = _symbolTableContents[symtab][symIndex];
                 //Console.WriteLine("{0,-30} {1}", symName, reloc);
 
-                Address source = _sectionBases[section] + r_offset;
-                Address dest = ResolveSymbol(elf, symName).address + r_addend;
+                Word source = _sectionBases[section] + r_offset;
+                Word dest = ResolveSymbol(elf, symName).address + r_addend;
 
                 //Console.WriteLine("Linking from {0} to {1}", source, dest);
 
-                if (!AttemptApplyReloc(reloc, source, dest))
-                {
-                    // This relocation cannot be statically applied,
-                    // so defer it to later
-                    if (source.IsAbsolute)
-                        throw new InvalidOperationException("cannot dynamically relocate an absolute address");
-
-                    if (!KamekUseReloc(reloc, source, dest))
-                    {
-                        if (source >= _outputEnd)
-                            throw new InvalidOperationException("cannot dynamically relocate something outside the output");
-
-                        _fixups.Add(new Fixup { type = reloc, source = source, dest = dest });
-                    }
-                }
+                if (!KamekUseReloc(reloc, source, dest))
+                    _fixups.Add(new Fixup { type = reloc, source = source, dest = dest });
             }
-        }
-
-        private bool AttemptApplyReloc(Elf.Reloc type, Address source, Address dest)
-        {
-            switch (type)
-            {
-                case Elf.Reloc.R_PPC_REL24:
-                    if (source.IsAbsolute == dest.IsAbsolute)
-                    {
-                        long delta = dest - source;
-                        uint insn = ReadUInt32(source) & 0xFC000003;
-                        insn |= ((uint)delta & 0x3FFFFFC);
-                        WriteUInt32(source, insn);
-
-                        return true;
-                    }
-                    break;
-
-                case Elf.Reloc.R_PPC_ADDR32:
-                    if (dest.IsAbsolute)
-                    {
-                        WriteUInt32(source, dest.Addr);
-                        return true;
-                    }
-                    break;
-
-                case Elf.Reloc.R_PPC_ADDR16_LO:
-                    if (dest.IsAbsolute)
-                    {
-                        WriteUInt16(source, (ushort)(dest.Addr & 0xFFFF));
-                        return true;
-                    }
-                    break;
-
-                case Elf.Reloc.R_PPC_ADDR16_HI:
-                    if (dest.IsAbsolute)
-                    {
-                        WriteUInt16(source, (ushort)(dest.Addr >> 16));
-                        return true;
-                    }
-                    break;
-
-                case Elf.Reloc.R_PPC_ADDR16_HA:
-                    if (dest.IsAbsolute)
-                    {
-                        ushort v = (ushort)(dest.Addr >> 16);
-                        if ((dest.Addr & 0x8000) == 0x8000)
-                            v++;
-                        WriteUInt16(source, v);
-                        return true;
-                    }
-                    break;
-
-                default:
-                    throw new NotImplementedException("unrecognised relocation type");
-            }
-
-            return false;
         }
         #endregion
 
 
-        #region Kamek Data
-        private Dictionary<Address, Address> _kamekRelocations = new Dictionary<Address, Address>();
+        #region Kamek Hooks
+        private Dictionary<Word, Word> _kamekRelocations = new Dictionary<Word, Word>();
 
-        private bool KamekUseReloc(Elf.Reloc type, Address source, Address dest)
+        private bool KamekUseReloc(Elf.Reloc type, Word source, Word dest)
         {
             if (source < _kamekStart || source >= _kamekEnd)
                 return false;
@@ -522,35 +389,40 @@ namespace Kamek
             return true;
         }
 
-        // for the purposes of this function, a u32 is treated as an
-        // absolute address :p
-        private Address ResolveKamekPointer(Address ptr)
+        public struct HookData
         {
-            if (_kamekRelocations.ContainsKey(ptr))
-                return _kamekRelocations[ptr];
-            else
-                return new Address(true, ReadUInt32(ptr));
+            public uint type;
+            public Word[] args;
         }
 
+        private List<HookData> _hooks = new List<HookData>();
+        public IList<HookData> Hooks { get { return _hooks; } }
 
-        private void ExtractKamekData()
+
+        private void ProcessHooks()
         {
             foreach (var elf in _modules)
             {
                 foreach (var pair in _localSymbols[elf])
                 {
-                    if (pair.Key.StartsWith("_kCmd"))
+                    if (pair.Key.StartsWith("_kHook"))
                     {
-                        var type = pair.Key.Substring(5, pair.Key.IndexOf('_', 5) - 5);
-                        var cmd = pair.Value.address;
-                        switch (type)
+                        var cmdAddr = pair.Value.address;
+
+                        var argCount = ReadUInt32(cmdAddr);
+                        var type = ReadUInt32(cmdAddr + 4);
+                        var args = new Word[argCount];
+
+                        for (int i = 0; i < argCount; i++)
                         {
-                            case "Write32":
-                                Address addr = ResolveKamekPointer(cmd);
-                                Address value = ResolveKamekPointer(cmd + 4);
-                                //Console.WriteLine("Writing {1:X} to {0:X}", addr, value);
-                                break;
+                            var argAddr = cmdAddr + (8 + (i * 4));
+                            if (_kamekRelocations.ContainsKey(argAddr))
+                                args[i] = _kamekRelocations[argAddr];
+                            else
+                                args[i] = new Word(WordType.Value, ReadUInt32(argAddr));
                         }
+
+                        _hooks.Add(new HookData { type = type, args = args });
                     }
                 }
             }
