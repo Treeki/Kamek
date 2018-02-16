@@ -1,5 +1,5 @@
 # Kamek
-a nice code injection engine for Wii games - (c) Treeki 2010-2015
+a nice code injection engine for Wii games - (c) Treeki 2010-2018
 
 ### Introduction
 
@@ -10,8 +10,13 @@ Kamek is an engine for injecting custom code into Wii games - it's designed for
  for the [*Newer Super Mario Bros. Wii* project][newer]. It cannot build Newer
  in its current form, but this may be possible later.)
 
-More details will be provided later, I'm also working on a series of blog posts
-about this project and its internals.
+### TODO
+
+- Port some of the Newer hacks to this
+
+- More testing
+
+- Add support for automatically translating pointers to other game versions
 
 ### Requirements
 

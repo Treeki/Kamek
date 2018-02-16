@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,15 +57,29 @@ namespace Kamek.Commands
             Original = original;
         }
 
-        public override byte[] PackArguments()
+        public override void WriteArguments(BinaryWriter bw)
         {
-            throw new NotImplementedException();
+            if (ValueType == Type.Pointer)
+                Value.AssertNotAmbiguous();
+            else
+                Value.AssertValue();
+
+            bw.WriteBE(Value.Value);
+
+            if (Original.HasValue)
+            {
+                Original.Value.AssertNotRelative();
+                bw.WriteBE(Original.Value);
+            }
         }
 
         public override string PackForRiivolution()
         {
             Address.AssertAbsolute();
-            Value.AssertAbsolute();
+            if (ValueType == Type.Pointer)
+                Value.AssertAbsolute();
+            else
+                Value.AssertValue();
 
             if (Original.HasValue)
             {
@@ -95,7 +110,10 @@ namespace Kamek.Commands
         public override IEnumerable<ulong> PackGeckoCodes()
         {
             Address.AssertAbsolute();
-            Value.AssertAbsolute();
+            if (ValueType == Type.Pointer)
+                Value.AssertAbsolute();
+            else
+                Value.AssertValue();
 
             if (Original.HasValue)
                 throw new NotImplementedException("conditional writes not yet supported for gecko");

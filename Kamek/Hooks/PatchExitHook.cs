@@ -15,12 +15,11 @@ namespace Kamek.Hooks
                 throw new InvalidDataException("PatchExitCommand requires two arguments");
 
             var function = args[0];
-            var dest = args[1];
+            var dest = GetAnyPointerArg(args[1]);
 
-            if (dest.Type != WordType.Value || dest.Value != 0)
+            if (!args[1].IsValue || args[1].Value != 0)
             {
-                // boop
-                throw new NotImplementedException();
+                Commands.Add(new Commands.PatchExitCommand(function, dest));
             }
         }
     }

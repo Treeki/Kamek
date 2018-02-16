@@ -1,37 +1,77 @@
 #include "kamekLoader.h"
 
 void loadIntoNSMBW();
-kmCondWrite32(0x80328478, 0x8015BC60, loadIntoNSMBW); // EU
-kmCondWrite32(0x80328130, 0x8015BB20, loadIntoNSMBW); // US
-kmCondWrite32(0x80327E98, 0x8015B930, loadIntoNSMBW); // JP
+kmCondWritePointer(0x80328478, 0x8015BC60, loadIntoNSMBW); // EU
+kmCondWritePointer(0x80328130, 0x8015BB20, loadIntoNSMBW); // US
+kmCondWritePointer(0x80327E98, 0x8015B930, loadIntoNSMBW); // JP
+
+typedef void *(*EGG_Heap_Alloc_t) (u32 size, s32 align, void *heap);
+typedef void (*EGG_Heap_Free_t) (void *buffer, void *heap);
+
+struct loaderFunctionsEx {
+	loaderFunctions base;
+	EGG_Heap_Alloc_t eggAlloc;
+	EGG_Heap_Free_t eggFree;
+	void **gameHeapPtr;
+	void **archiveHeapPtr;
+};
+
+void *allocAdapter(u32 size, bool isForCode, const loaderFunctions *funcs) {
+	const loaderFunctionsEx *funcsEx = (const loaderFunctionsEx *)funcs;
+	void **heapPtr = isForCode ? funcsEx->gameHeapPtr : funcsEx->archiveHeapPtr;
+	return funcsEx->eggAlloc(size, 0x20, *heapPtr);
+}
+void freeAdapter(void *buffer, bool isForCode, const loaderFunctions *funcs) {
+	const loaderFunctionsEx *funcsEx = (const loaderFunctionsEx *)funcs;
+	void **heapPtr = isForCode ? funcsEx->gameHeapPtr : funcsEx->archiveHeapPtr;
+	funcsEx->eggFree(buffer, *heapPtr);
+}
 
 
-const loaderFunctions functions_eu = {
-	(OSReport_t) 0x8015F870,
+const loaderFunctionsEx functions_eu = {
+	{(OSReport_t) 0x8015F870,
 	(OSFatal_t) 0x801AF710,
 	(DVDConvertPathToEntrynum_t) 0x801CA7C0,
 	(DVDFastOpen_t) 0x801CAAD0,
 	(DVDReadPrio_t) 0x801CAC60,
 	(DVDClose_t) 0x801CAB40,
 	(sprintf_t) 0x802E1ACC,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B8E00,
+	(EGG_Heap_Free_t) 0x802B90B0,
+	(void **) 0x80377F48,
+	(void **) 0x8042A72C
 };
-const loaderFunctions functions_us = {
-	(OSReport_t) 0x8015F830,
+const loaderFunctionsEx functions_us = {
+	{(OSReport_t) 0x8015F830,
 	(OSFatal_t) 0x801AF5D0,
 	(DVDConvertPathToEntrynum_t) 0x801CA680,
 	(DVDFastOpen_t) 0x801CA990,
 	(DVDReadPrio_t) 0x801CAB20,
 	(DVDClose_t) 0x801CAA00,
 	(sprintf_t) 0x802E17DC,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B8CC0,
+	(EGG_Heap_Free_t) 0x802B8F70,
+	(void **) 0x80377C48,
+	(void **) 0x8042A44C
 };
-const loaderFunctions functions_jp = {
-	(OSReport_t) 0x8015F540,
+const loaderFunctionsEx functions_jp = {
+	{(OSReport_t) 0x8015F540,
 	(OSFatal_t) 0x801AF3E0,
 	(DVDConvertPathToEntrynum_t) 0x801CA490,
 	(DVDFastOpen_t) 0x801CA7A0,
 	(DVDReadPrio_t) 0x801CA930,
 	(DVDClose_t) 0x801CA810,
 	(sprintf_t) 0x802E15EC,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B8AD0,
+	(EGG_Heap_Free_t) 0x802B8D80,
+	(void **) 0x803779C8,
+	(void **) 0x8042A16C
 };
 
 void unknownVersion()
@@ -77,13 +117,13 @@ void loadIntoNSMBW()
 	const loaderFunctions *funcs = NULL;
 	switch (region)
 	{
-		case 'P': funcs = &functions_eu; break;
-		case 'E': funcs = &functions_us; break;
-		case 'J': funcs = &functions_jp; break;
+		case 'P': funcs = &functions_eu.base; break;
+		case 'E': funcs = &functions_us.base; break;
+		case 'J': funcs = &functions_jp.base; break;
 	}
 
 	char path[64];
 	funcs->sprintf(path, "/engine.%c%d.bin", region, version);
-	loadKamekBinary(funcs, path);
+	loadKamekBinaryFromDisc(funcs, path);
 }
 

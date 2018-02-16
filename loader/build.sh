@@ -1,4 +1,4 @@
-CW_PATH=/d/crap/cw/PowerPC_EABI_Tools/Command_Line_Tools
+CW_PATH=../cw
 CPPFILES="kamekLoader nsmbw"
 
 CC=$CW_PATH/mwcceppc

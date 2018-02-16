@@ -29,6 +29,9 @@ namespace Kamek.Commands
             CondWrite32 = 36,
             CondWrite16 = 37,
             CondWrite8 = 38,
+
+            Branch = 64,
+            BranchLink = 65,
         }
 
         public readonly Ids Id;
@@ -40,19 +43,9 @@ namespace Kamek.Commands
             Address = address;
         }
 
-        public abstract byte[] PackArguments();
+        public abstract void WriteArguments(BinaryWriter bw);
         public abstract string PackForRiivolution();
         public abstract IEnumerable<ulong> PackGeckoCodes();
         public abstract bool Apply(KamekFile file);
-
-
-        public void Write(BinaryWriter bw)
-        {
-            byte header = (byte)Id;
-
-            bw.Write((byte)header);
-            bw.WriteBE(Address);
-            bw.Write(PackArguments());
-        }
     }
 }

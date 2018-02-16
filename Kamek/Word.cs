@@ -72,13 +72,27 @@ namespace Kamek
 
         public void AssertAbsolute()
         {
-            if (Type != WordType.AbsoluteAddr)
+            if (!IsAbsolute)
                 throw new InvalidOperationException(string.Format("word {0} must be an absolute address in this context", this));
         }
         public void AssertNotRelative()
         {
-            if (Type == WordType.RelativeAddr)
+            if (IsRelative)
                 throw new InvalidOperationException(string.Format("word {0} cannot be a relative address in this context", this));
+        }
+        public void AssertValue()
+        {
+            if (!IsValue)
+                throw new InvalidOperationException(string.Format("word {0} must be a value in this context", this));
+        }
+        public void AssertNotAmbiguous()
+        {
+            // Verifies that this Address can be disambiguated between Absolute
+            // and Relative from _just_ the top bit
+            if (IsAbsolute && (Value & 0x80000000) == 0)
+                throw new InvalidOperationException("address is ambiguous: absolute, top bit not set");
+            if (IsRelative && (Value & 0x80000000) != 0)
+                throw new InvalidOperationException("address is ambiguous: relative, top bit set");
         }
         #endregion
 

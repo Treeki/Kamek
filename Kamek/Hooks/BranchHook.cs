@@ -14,32 +14,10 @@ namespace Kamek.Hooks
             if (args.Length != 2)
                 throw new InvalidDataException("wrong arg count for BranchCommand");
 
-            var source = args[0];
-            var dest = args[1];
+            var source = GetAbsoluteArg(args[0]);
+            var dest = GetAnyPointerArg(args[1]);
+
+            Commands.Add(new Commands.BranchCommand(source, dest, isLink));
         }
-
-        /*public void WriteBinary(System.IO.BinaryWriter bw)
-        {
-            uint insn = _isLink ? 0x48000001U : 0x48000000U;
-            
-            // write a four-byte patch, followed by a fixup
-            var command = KamekFile.BinCommand.Write32;
-            if (_source.IsAbsolute)
-                command |= KamekFile.BinCommand.AbsoluteAddrFlag;
-
-            bw.Write((byte)command);
-            bw.WriteBE((uint)_source.Addr);
-            bw.WriteBE((uint)insn);
-
-            bw.Write((byte)Elf.Reloc.R_PPC_REL24);
-            bw.WriteBE((uint)_source.Addr);
-            bw.WriteBE((uint)_dest.Addr);
-        }
-
-        public string GenerateRiivPatch()
-        {
-            uint insn = _isLink ? 0x48000001U : 0x48000000U;
-            return "";
-        }*/
     }
 }

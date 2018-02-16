@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,9 +17,10 @@ namespace Kamek.Commands
             Target = target;
         }
 
-        public override byte[] PackArguments()
+        public override void WriteArguments(BinaryWriter bw)
         {
-            throw new NotImplementedException();
+            Target.AssertNotAmbiguous();
+            bw.WriteBE(Target.Value);
         }
 
         public override string PackForRiivolution()
@@ -36,7 +38,7 @@ namespace Kamek.Commands
             switch (Id)
             {
                 case Ids.Rel24:
-                    if (Address.Type == WordType.AbsoluteAddr && Target.Type == WordType.AbsoluteAddr)
+                    if ((Address.IsAbsolute && Target.IsAbsolute) || (Address.IsRelative && Target.IsRelative))
                     {
                         long delta = Target - Address;
                         uint insn = file.ReadUInt32(Address) & 0xFC000003;

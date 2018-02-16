@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\BranchCommand.cs" />
+    <Compile Include="Commands\PatchExitCommand.cs" />
     <Compile Include="Commands\RelocCommand.cs" />
     <Compile Include="Word.cs" />
     <Compile Include="Commands\Command.cs" />

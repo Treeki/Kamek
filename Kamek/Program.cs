@@ -18,7 +18,7 @@ namespace Kamek
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
             uint? baseAddress = null;
-            string outputKamekPath = null, outputRiivPath = null, outputGeckoPath = null;
+            string outputKamekPath = null, outputRiivPath = null, outputGeckoPath = null, outputCodePath = null;
             var externals = new Dictionary<string, uint>();
 
             foreach (var arg in args)
@@ -35,6 +35,8 @@ namespace Kamek
                         outputRiivPath = arg.Substring(13);
                     else if (arg.StartsWith("-output-gecko="))
                         outputGeckoPath = arg.Substring(14);
+                    else if (arg.StartsWith("-output-code="))
+                        outputCodePath = arg.Substring(13);
                     else if (arg.StartsWith("-externals="))
                         ReadExternals(externals, arg.Substring(11));
                     else
@@ -57,7 +59,7 @@ namespace Kamek
                 Console.WriteLine("no input files specified");
                 return;
             }
-            if (outputKamekPath == null && outputRiivPath == null && outputGeckoPath == null)
+            if (outputKamekPath == null && outputRiivPath == null && outputGeckoPath == null && outputCodePath == null)
             {
                 Console.WriteLine("no output path(s) specified");
                 return;
@@ -81,6 +83,8 @@ namespace Kamek
                 File.WriteAllText(outputRiivPath, kf.PackRiivolution());
             if (outputGeckoPath != null)
                 File.WriteAllText(outputGeckoPath, kf.PackGeckoCodes());
+            if (outputCodePath != null)
+                File.WriteAllBytes(outputCodePath, kf.CodeBlob);
         }
 
         private static void ReadExternals(Dictionary<string, uint> dict, string path)

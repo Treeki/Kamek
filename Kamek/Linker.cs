@@ -114,6 +114,7 @@ namespace Kamek
             ImportSections(".data");
             _outputEnd = _location;
 
+            // TODO: maybe should align to 0x20 here?
             _bssStart = _location;
             ImportSections(".bss");
             _bssEnd = _location;
@@ -165,12 +166,15 @@ namespace Kamek
         private Dictionary<Elf, Dictionary<string, Symbol>> _localSymbols = null;
         private Dictionary<Elf.ElfSection, string[]> _symbolTableContents = null;
         private Dictionary<string, uint> _externalSymbols = null;
+        private Dictionary<Word, uint> _symbolSizes = null;
+        public IReadOnlyDictionary<Word, uint> SymbolSizes { get { return _symbolSizes; } }
 
         private void BuildSymbolTables()
         {
             _globalSymbols = new Dictionary<string, Symbol>();
             _localSymbols = new Dictionary<Elf, Dictionary<string, Symbol>>();
             _symbolTableContents = new Dictionary<Elf.ElfSection, string[]>();
+            _symbolSizes = new Dictionary<Word, uint>();
 
             _globalSymbols["__ctor_loc"] = new Symbol { address = _ctorStart };
             _globalSymbols["__ctor_end"] = new Symbol { address = _ctorEnd };
@@ -263,17 +267,22 @@ namespace Kamek
                         if (locals.ContainsKey(name))
                             throw new InvalidDataException("redefinition of local symbol " + name);
                         locals[name] = new Symbol { address = addr, size = st_size };
+                        _symbolSizes[addr] = st_size;
                         break;
 
                     case Elf.SymBind.STB_GLOBAL:
                         if (_globalSymbols.ContainsKey(name) && !_globalSymbols[name].isWeak)
                             throw new InvalidDataException("redefinition of global symbol " + name);
                         _globalSymbols[name] = new Symbol { address = addr, size = st_size };
+                        _symbolSizes[addr] = st_size;
                         break;
 
                     case Elf.SymBind.STB_WEAK:
                         if (!_globalSymbols.ContainsKey(name))
+                        {
                             _globalSymbols[name] = new Symbol { address = addr, size = st_size, isWeak = true };
+                            _symbolSizes[addr] = st_size;
+                        }
                         break;
                 }
             }
@@ -304,7 +313,7 @@ namespace Kamek
             public Word source, dest;
         }
         private List<Fixup> _fixups = new List<Fixup>();
-        public IList<Fixup> Fixups { get { return _fixups; } }
+        public IReadOnlyList<Fixup> Fixups { get { return _fixups; } }
 
         private void ProcessRelocations()
         {
@@ -383,7 +392,7 @@ namespace Kamek
             if (source < _kamekStart || source >= _kamekEnd)
                 return false;
             if (type != Elf.Reloc.R_PPC_ADDR32)
-                return false;
+                throw new InvalidOperationException("Unsupported relocation type in the Kamek hook data section");
 
             _kamekRelocations[source] = dest;
             return true;

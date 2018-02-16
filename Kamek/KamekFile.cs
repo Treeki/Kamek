@@ -42,10 +42,21 @@ namespace Kamek
         {
             Util.InjectUInt32(_codeBlob, addr - _baseAddress, value);
         }
+
+        public bool Contains(Word addr)
+        {
+            return (addr >= _baseAddress && addr < (_baseAddress + _codeBlob.Length));
+        }
+
+        public uint QuerySymbolSize(Word addr)
+        {
+            return _symbolSizes[addr];
+        }
         #endregion
 
         private Dictionary<Word, Commands.Command> _commands;
         private List<Hooks.Hook> _hooks;
+        private Dictionary<Word, uint> _symbolSizes;
 
         public void LoadFromLinker(Linker linker)
         {
@@ -62,6 +73,10 @@ namespace Kamek
             _hooks = new List<Hooks.Hook>();
             _commands = new Dictionary<Word, Commands.Command>();
 
+            _symbolSizes = new Dictionary<Word, uint>();
+            foreach (var pair in linker.SymbolSizes)
+                _symbolSizes.Add(pair.Key, pair.Value);
+
             AddRelocsAsCommands(linker.Fixups);
             foreach (var cmd in linker.Hooks)
                 ApplyHook(cmd);
@@ -69,7 +84,7 @@ namespace Kamek
         }
 
 
-        private void AddRelocsAsCommands(IList<Linker.Fixup> relocs)
+        private void AddRelocsAsCommands(IReadOnlyList<Linker.Fixup> relocs)
         {
             foreach (var rel in relocs)
             {
@@ -120,6 +135,26 @@ namespace Kamek
                     bw.WriteBE((uint)_codeBlob.Length);
 
                     bw.Write(_codeBlob);
+
+                    foreach (var pair in _commands)
+                    {
+                        uint cmdID = (uint)pair.Value.Id << 24;
+                        if (pair.Value.Address.IsRelative)
+                        {
+                            if (pair.Value.Address.Value > 0xFFFFFF)
+                                throw new InvalidOperationException("Address too high for packed command");
+
+                            cmdID |= pair.Value.Address.Value;
+                            bw.WriteBE(cmdID);
+                        }
+                        else
+                        {
+                            cmdID |= 0xFFFFFE;
+                            bw.WriteBE(cmdID);
+                            bw.WriteBE(pair.Value.Address.Value);
+                        }
+                        pair.Value.WriteArguments(bw);
+                    }
                 }
 
                 return ms.ToArray();
