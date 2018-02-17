@@ -44,7 +44,7 @@ const loaderFunctionsEx functions_eu = {
 	(void **) 0x8042A72C
 };
 const loaderFunctionsEx functions_us = {
-	{(OSReport_t) 0x8015F830,
+	{(OSReport_t) 0x8015F730,
 	(OSFatal_t) 0x801AF5D0,
 	(DVDConvertPathToEntrynum_t) 0x801CA680,
 	(DVDFastOpen_t) 0x801CA990,
