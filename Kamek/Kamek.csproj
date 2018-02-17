@@ -44,6 +44,8 @@
     <Compile Include="Commands\BranchCommand.cs" />
     <Compile Include="Commands\PatchExitCommand.cs" />
     <Compile Include="Commands\RelocCommand.cs" />
+    <Compile Include="AddressMapper.cs" />
+    <Compile Include="VersionInfo.cs" />
     <Compile Include="Word.cs" />
     <Compile Include="Commands\Command.cs" />
     <Compile Include="Commands\WriteCommand.cs" />

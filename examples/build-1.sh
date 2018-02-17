@@ -14,6 +14,6 @@ echo Linking...
 
 #../Kamek/bin/Debug/Kamek 1-nsmbw-osreport.o -static=0x80001800 -externals=externals-nsmbw-eu-v1.txt -output-code=1-loader.bin -output-riiv=1-loader.xml
 ../Kamek/bin/Debug/Kamek 1-nsmbw-osreport.o -static=0x80341E68 -externals=externals-nsmbw-eu-v1.txt -output-riiv=1-loader.xml -output-gecko=1-loader.txt -output-code=1-loader.bin
-../Kamek/bin/Debug/Kamek 1-nsmbw-osreport.o -dynamic -externals=externals-nsmbw-eu-v1.txt -output-kamek=1-dynamic.bin -output-code=1-dynamic-code.bin
+../Kamek/bin/Debug/Kamek 1-nsmbw-osreport.o -dynamic -externals=externals-nsmbw-eu-v1.txt -versions=versions-nsmbw.txt -output-kamek=1-dynamic.\$KV\$.bin
 
 

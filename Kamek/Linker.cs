@@ -11,6 +11,12 @@ namespace Kamek
     {
         private bool _linked = false;
         private List<Elf> _modules = new List<Elf>();
+        public readonly AddressMapper Mapper;
+
+        public Linker(AddressMapper mapper)
+        {
+            Mapper = mapper;
+        }
 
         public void AddModule(Elf elf)
         {
@@ -24,22 +30,24 @@ namespace Kamek
 
         public void LinkStatic(uint baseAddress, Dictionary<string, uint> externalSymbols)
         {
-            _baseAddress = new Word(WordType.AbsoluteAddr, baseAddress);
-            _externalSymbols = externalSymbols;
-            DoLink();
+            _baseAddress = new Word(WordType.AbsoluteAddr, Mapper.Remap(baseAddress));
+            DoLink(externalSymbols);
         }
         public void LinkDynamic(Dictionary<String, uint> externalSymbols)
         {
             _baseAddress = new Word(WordType.RelativeAddr, 0);
-            _externalSymbols = externalSymbols;
-            DoLink();
+            DoLink(externalSymbols);
         }
 
-        private void DoLink()
+        private void DoLink(Dictionary<String, uint> externalSymbols)
         {
             if (_linked)
                 throw new InvalidOperationException("This linker has already been linked");
             _linked = true;
+
+            _externalSymbols = new Dictionary<string, uint>();
+            foreach (var pair in externalSymbols)
+                _externalSymbols.Add(pair.Key, Mapper.Remap(pair.Value));
 
             CollectSections();
             BuildSymbolTables();

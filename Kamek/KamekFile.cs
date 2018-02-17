@@ -57,11 +57,14 @@ namespace Kamek
         private Dictionary<Word, Commands.Command> _commands;
         private List<Hooks.Hook> _hooks;
         private Dictionary<Word, uint> _symbolSizes;
+        private AddressMapper _mapper;
 
         public void LoadFromLinker(Linker linker)
         {
             if (_codeBlob != null)
                 throw new InvalidOperationException("this KamekFile already has stuff in it");
+
+            _mapper = linker.Mapper;
 
             // Extract _just_ the code/data sections
             _codeBlob = new byte[linker.OutputEnd - linker.OutputStart];
@@ -97,7 +100,7 @@ namespace Kamek
 
         private void ApplyHook(Linker.HookData hookData)
         {
-            var hook = Hooks.Hook.Create(hookData);
+            var hook = Hooks.Hook.Create(hookData, _mapper);
             foreach (var cmd in hook.Commands)
             {
                 if (_commands.ContainsKey(cmd.Address))

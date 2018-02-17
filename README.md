@@ -16,8 +16,6 @@ Kamek is an engine for injecting custom code into Wii games - it's designed for
 
 - More testing
 
-- Add support for automatically translating pointers to other game versions
-
 ### Requirements
 
 To build and run the Kamek linker:

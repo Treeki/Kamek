@@ -20,6 +20,7 @@ namespace Kamek
             uint? baseAddress = null;
             string outputKamekPath = null, outputRiivPath = null, outputGeckoPath = null, outputCodePath = null;
             var externals = new Dictionary<string, uint>();
+            VersionInfo versions = null;
 
             foreach (var arg in args)
             {
@@ -39,6 +40,8 @@ namespace Kamek
                         outputCodePath = arg.Substring(13);
                     else if (arg.StartsWith("-externals="))
                         ReadExternals(externals, arg.Substring(11));
+                    else if (arg.StartsWith("-versions="))
+                        versions = new VersionInfo(arg.Substring(10));
                     else
                         Console.WriteLine("warning: unrecognised argument: {0}", arg);
                 }
@@ -51,6 +54,11 @@ namespace Kamek
                     }
                 }
             }
+
+
+            // We need a default VersionList for the loop later
+            if (versions == null)
+                versions = new VersionInfo();
 
 
             // Can we build a thing?
@@ -66,32 +74,37 @@ namespace Kamek
             }
 
 
-            var linker = new Linker();
-            foreach (var module in modules)
-                linker.AddModule(module);
+            foreach (var version in versions.Mappers)
+            {
+                Console.WriteLine("linking version {0}...", version.Key);
 
-            if (baseAddress.HasValue)
-                linker.LinkStatic(baseAddress.Value, externals);
-            else
-                linker.LinkDynamic(externals);
+                var linker = new Linker(version.Value);
+                foreach (var module in modules)
+                    linker.AddModule(module);
 
-            var kf = new KamekFile();
-            kf.LoadFromLinker(linker);
-            if (outputKamekPath != null)
-                File.WriteAllBytes(outputKamekPath, kf.Pack());
-            if (outputRiivPath != null)
-                File.WriteAllText(outputRiivPath, kf.PackRiivolution());
-            if (outputGeckoPath != null)
-                File.WriteAllText(outputGeckoPath, kf.PackGeckoCodes());
-            if (outputCodePath != null)
-                File.WriteAllBytes(outputCodePath, kf.CodeBlob);
+                if (baseAddress.HasValue)
+                    linker.LinkStatic(baseAddress.Value, externals);
+                else
+                    linker.LinkDynamic(externals);
+
+                var kf = new KamekFile();
+                kf.LoadFromLinker(linker);
+                if (outputKamekPath != null)
+                    File.WriteAllBytes(outputKamekPath.Replace("$KV$", version.Key), kf.Pack());
+                if (outputRiivPath != null)
+                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution());
+                if (outputGeckoPath != null)
+                    File.WriteAllText(outputGeckoPath.Replace("$KV$", version.Key), kf.PackGeckoCodes());
+                if (outputCodePath != null)
+                    File.WriteAllBytes(outputCodePath.Replace("$KV$", version.Key), kf.CodeBlob);
+            }
         }
 
         private static void ReadExternals(Dictionary<string, uint> dict, string path)
         {
             var commentRegex = new Regex(@"^\s*#");
             var emptyLineRegex = new Regex(@"^\s*$");
-            var assignmentRegex = new Regex(@"^\s*([a-zA-Z0-9_\$]+)\s*=\s*0x([a-fA-F0-9]+)\s*(//.*)?$");
+            var assignmentRegex = new Regex(@"^\s*([a-zA-Z0-9_\$]+)\s*=\s*0x([a-fA-F0-9]+)\s*(#.*)?$");
 
             foreach (var line in File.ReadAllLines(path))
             {
