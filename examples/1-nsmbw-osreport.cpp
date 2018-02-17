@@ -1,7 +1,5 @@
 #include <kamek.h>
 
-void OSReport(const char *str, ...);
-
 // NOTE: bss _must_ be init'ed to zero!
 // todo: modify the Riiv patcher to take this into account!
 // ALSO, this doesn't work on Gecko as the codehandler resets counter=1
