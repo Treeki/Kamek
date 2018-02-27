@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Dol.cs" />
     <Compile Include="Commands\BranchCommand.cs" />
     <Compile Include="Commands\PatchExitCommand.cs" />
     <Compile Include="Commands\RelocCommand.cs" />

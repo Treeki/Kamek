@@ -131,6 +131,41 @@ namespace Kamek.Commands
             return new ulong[1] { code };
         }
 
+        public override void ApplyToDol(Dol dol)
+        {
+            Address.AssertAbsolute();
+            if (ValueType == Type.Pointer)
+                Value.AssertAbsolute();
+            else
+                Value.AssertValue();
+
+            if (Original.HasValue)
+            {
+                bool patchOK = false;
+                switch (ValueType)
+                {
+                    case Type.Value8:
+                        patchOK = (dol.ReadByte(Address.Value) == Original.Value.Value);
+                        break;
+                    case Type.Value16:
+                        patchOK = (dol.ReadUInt16(Address.Value) == Original.Value.Value);
+                        break;
+                    case Type.Value32:
+                    case Type.Pointer:
+                        patchOK = (dol.ReadUInt32(Address.Value) == Original.Value.Value);
+                        break;
+                }
+            }
+
+            switch (ValueType)
+            {
+                case Type.Value8: dol.WriteByte(Address.Value, (byte)Value.Value); break;
+                case Type.Value16: dol.WriteUInt16(Address.Value, (ushort)Value.Value); break;
+                case Type.Value32:
+                case Type.Pointer: dol.WriteUInt32(Address.Value, Value.Value); break;
+            }
+        }
+
         public override bool Apply(KamekFile file)
         {
             return false;

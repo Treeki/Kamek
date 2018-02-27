@@ -228,5 +228,33 @@ namespace Kamek
 
             return string.Join("\n", elements);
         }
+
+        public void InjectIntoDol(Dol dol)
+        {
+            if (_baseAddress.Type == WordType.RelativeAddr)
+                throw new InvalidOperationException("cannot pack a dynamically linked binary into a DOL");
+
+            // find an empty text section
+            int victimSection = -1;
+            for (int i = 0; i < dol.Sections.Length; i++)
+            {
+                if (dol.Sections[i].Data.Length == 0)
+                {
+                    victimSection = i;
+                    break;
+                }
+            }
+
+            if (victimSection == -1)
+                throw new InvalidOperationException("cannot find an empty text section in the DOL");
+
+            // throw the code blob into it
+            dol.Sections[victimSection].LoadAddress = _baseAddress.Value;
+            dol.Sections[victimSection].Data = _codeBlob;
+
+            // apply all patches
+            foreach (var pair in _commands)
+                pair.Value.ApplyToDol(dol);
+        }
     }
 }

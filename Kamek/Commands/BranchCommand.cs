@@ -53,6 +53,14 @@ namespace Kamek.Commands
             return false;
         }
 
+        public override void ApplyToDol(Dol dol)
+        {
+            Address.AssertAbsolute();
+            Target.AssertAbsolute();
+
+            dol.WriteUInt32(Target.Value, GenerateInstruction());
+        }
+
 
         private uint GenerateInstruction()
         {

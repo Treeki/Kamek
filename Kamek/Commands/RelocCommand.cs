@@ -33,6 +33,44 @@ namespace Kamek.Commands
             throw new NotImplementedException();
         }
 
+        public override void ApplyToDol(Dol dol)
+        {
+            Address.AssertAbsolute();
+            Target.AssertAbsolute();
+
+            switch (Id)
+            {
+                case Ids.Rel24:
+                    long delta = Target - Address;
+                    uint insn = dol.ReadUInt32(Address.Value) & 0xFC000003;
+                    insn |= ((uint)delta & 0x3FFFFFC);
+                    dol.WriteUInt32(Address.Value, insn);
+                    break;
+
+                case Ids.Addr32:
+                    dol.WriteUInt32(Address.Value, Target.Value);
+                    break;
+
+                case Ids.Addr16Lo:
+                    dol.WriteUInt16(Address.Value, (ushort)(Target.Value & 0xFFFF));
+                    break;
+
+                case Ids.Addr16Hi:
+                    dol.WriteUInt16(Address.Value, (ushort)(Target.Value >> 16));
+                    break;
+
+                case Ids.Addr16Ha:
+                    ushort v = (ushort)(Target.Value >> 16);
+                    if ((Target.Value & 0x8000) == 0x8000)
+                        v++;
+                    dol.WriteUInt16(Address.Value, v);
+                    break;
+
+                default:
+                    throw new NotImplementedException("unrecognised relocation type");
+            }
+        }
+
         public override bool Apply(KamekFile file)
         {
             switch (Id)

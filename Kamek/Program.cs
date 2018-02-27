@@ -19,6 +19,7 @@ namespace Kamek
             var modules = new List<Elf>();
             uint? baseAddress = null;
             string outputKamekPath = null, outputRiivPath = null, outputGeckoPath = null, outputCodePath = null;
+            string inputDolPath = null, outputDolPath = null;
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
 
@@ -38,6 +39,10 @@ namespace Kamek
                         outputGeckoPath = arg.Substring(14);
                     else if (arg.StartsWith("-output-code="))
                         outputCodePath = arg.Substring(13);
+                    else if (arg.StartsWith("-input-dol="))
+                        inputDolPath = arg.Substring(11);
+                    else if (arg.StartsWith("-output-dol="))
+                        outputDolPath = arg.Substring(12);
                     else if (arg.StartsWith("-externals="))
                         ReadExternals(externals, arg.Substring(11));
                     else if (arg.StartsWith("-versions="))
@@ -72,6 +77,11 @@ namespace Kamek
                 Console.WriteLine("no output path(s) specified");
                 return;
             }
+            if (outputDolPath != null && inputDolPath == null)
+            {
+                Console.WriteLine("input dol path not specified");
+                return;
+            }
 
 
             foreach (var version in versions.Mappers)
@@ -97,6 +107,18 @@ namespace Kamek
                     File.WriteAllText(outputGeckoPath.Replace("$KV$", version.Key), kf.PackGeckoCodes());
                 if (outputCodePath != null)
                     File.WriteAllBytes(outputCodePath.Replace("$KV$", version.Key), kf.CodeBlob);
+
+                if (outputDolPath != null)
+                {
+                    var dol = new Dol(new FileStream(inputDolPath, FileMode.Open));
+                    kf.InjectIntoDol(dol);
+
+                    var outpath = outputDolPath.Replace("$KV$", version.Key);
+                    using (var outStream = new FileStream(outpath, FileMode.Create))
+                    {
+                        dol.Write(outStream);
+                    }
+                }
             }
         }
 

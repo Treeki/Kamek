@@ -36,6 +36,11 @@ namespace Kamek.Commands
             throw new NotImplementedException();
         }
 
+        public override void ApplyToDol(Dol dol)
+        {
+            throw new NotImplementedException();
+        }
+
         public override bool Apply(KamekFile file)
         {
             // Do some reasonableness checks.
