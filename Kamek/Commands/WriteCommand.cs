@@ -155,6 +155,8 @@ namespace Kamek.Commands
                         patchOK = (dol.ReadUInt32(Address.Value) == Original.Value.Value);
                         break;
                 }
+                if (!patchOK)
+                    return;
             }
 
             switch (ValueType)

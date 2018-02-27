@@ -20,6 +20,7 @@ namespace Kamek
 
         public Dol(Stream input)
         {
+            Sections = new Section[18];
             var br = new BinaryReader(input);
 
             var fields = new uint[3 * 18];
@@ -53,10 +54,13 @@ namespace Kamek
             uint position = 0x100;
             for (int i = 0; i < 18; i++)
             {
-                fields[i] = position;
-                fields[i + 18] = Sections[i].LoadAddress;
-                fields[i + 36] = (uint)Sections[i].Data.Length;
-                position += (uint)((Sections[i].Data.Length + 0x1F) & ~0x1F);
+                if (Sections[i].Data.Length > 0)
+                {
+                    fields[i] = position;
+                    fields[i + 18] = Sections[i].LoadAddress;
+                    fields[i + 36] = (uint)Sections[i].Data.Length;
+                    position += (uint)((Sections[i].Data.Length + 0x1F) & ~0x1F);
+                }
             }
 
             for (int i = 0; i < (3 * 18); i++)

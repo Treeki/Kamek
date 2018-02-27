@@ -236,7 +236,7 @@ namespace Kamek
 
             // find an empty text section
             int victimSection = -1;
-            for (int i = 0; i < dol.Sections.Length; i++)
+            for (int i = dol.Sections.Length - 1; i >= 0; i--)
             {
                 if (dol.Sections[i].Data.Length == 0)
                 {
