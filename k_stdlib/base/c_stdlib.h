@@ -30,6 +30,8 @@ double sqrt(double);
 double tan(double);
 double tanh(double); // not in nsmbw
 
+extern f32 NAN;
+
 /* stdarg.h */
 typedef struct va_list_struct {
 	char gpr, fpr, reserved[2], *input_arg_area, *reg_save_area;

@@ -1,5 +1,5 @@
-#ifndef __KAMEK_BASE_C_RVL_SDK_H
-#define __KAMEK_BASE_C_RVL_SDK_H
+#ifndef __KAMEK_BASE_RVL_SDK_H
+#define __KAMEK_BASE_RVL_SDK_H
 
 #ifdef __cplusplus
 extern "C" {
