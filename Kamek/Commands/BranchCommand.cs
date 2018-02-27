@@ -58,7 +58,7 @@ namespace Kamek.Commands
             Address.AssertAbsolute();
             Target.AssertAbsolute();
 
-            dol.WriteUInt32(Target.Value, GenerateInstruction());
+            dol.WriteUInt32(Address.Value, GenerateInstruction());
         }
 
 
