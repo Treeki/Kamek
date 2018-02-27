@@ -72,7 +72,7 @@ namespace Kamek
                 Console.WriteLine("no input files specified");
                 return;
             }
-            if (outputKamekPath == null && outputRiivPath == null && outputGeckoPath == null && outputCodePath == null)
+            if (outputKamekPath == null && outputRiivPath == null && outputGeckoPath == null && outputCodePath == null && outputDolPath == null)
             {
                 Console.WriteLine("no output path(s) specified");
                 return;
