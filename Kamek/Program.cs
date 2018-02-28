@@ -126,7 +126,7 @@ namespace Kamek
         {
             var commentRegex = new Regex(@"^\s*#");
             var emptyLineRegex = new Regex(@"^\s*$");
-            var assignmentRegex = new Regex(@"^\s*([a-zA-Z0-9_\$]+)\s*=\s*0x([a-fA-F0-9]+)\s*(#.*)?$");
+            var assignmentRegex = new Regex(@"^\s*([a-zA-Z0-9_<>\$]+)\s*=\s*0x([a-fA-F0-9]+)\s*(#.*)?$");
 
             foreach (var line in File.ReadAllLines(path))
             {
