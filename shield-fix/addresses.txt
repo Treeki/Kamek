@@ -1,0 +1,3 @@
+normalise__Q23EGG8Vector3fFv=0x802C0D60
+strcmp=0x802E50D0
+
