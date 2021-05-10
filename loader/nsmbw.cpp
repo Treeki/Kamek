@@ -1,6 +1,6 @@
 #include "kamekLoader.h"
 
-void loadIntoNSMBW();
+int loadIntoNSMBW();
 kmCondWritePointer(0x80328478, 0x8015BC60, loadIntoNSMBW); // EU
 kmCondWritePointer(0x80328130, 0x8015BB20, loadIntoNSMBW); // US
 kmCondWritePointer(0x80327E98, 0x8015B930, loadIntoNSMBW); // JP
@@ -81,7 +81,7 @@ void unknownVersion()
 	for (;;);
 }
 
-void loadIntoNSMBW()
+int loadIntoNSMBW()
 {
 	int version = 0, region = 0;
 
@@ -125,5 +125,7 @@ void loadIntoNSMBW()
 	char path[64];
 	funcs->sprintf(path, "/engine.%c%d.bin", region, version);
 	loadKamekBinaryFromDisc(funcs, path);
+
+	return 1;
 }
 
