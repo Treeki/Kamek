@@ -3,6 +3,19 @@
 
 # Kamek build files
 *.o
+*.dol
+gecko.txt
+loader.bin
+loader.txt
+loader.xml
+*-loader.bin
+*-loader.txt
+*-loader.xml
+*-dynamic.*.bin
+cw/
+
+# clangd flags
+compile_flags.txt
 
 # User-specific files
 *.suo
