@@ -12,7 +12,7 @@ namespace Kamek
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Kamek 2.0 by Treeki");
+            Console.WriteLine("Kamek 2.0 by Ninji/Ash Wolf - https://github.com/Treeki/Kamek");
             Console.WriteLine();
 
             // Parse the command line arguments and do cool things!
@@ -28,6 +28,11 @@ namespace Kamek
             {
                 if (arg.StartsWith("-"))
                 {
+                    if (arg == "-h" || arg == "-help" || arg == "--help")
+                    {
+                        ShowHelp();
+                        return;
+                    }
                     if (arg == "-dynamic")
                         baseAddress = null;
                     else if (arg.StartsWith("-static=0x"))
@@ -171,6 +176,40 @@ namespace Kamek
                     Console.WriteLine("unrecognised line in externals file: {0}", line);
                 }
             }
+        }
+
+        private static void ShowHelp()
+        {
+            Console.WriteLine("Syntax:");
+            Console.WriteLine("  Kamek file1.o [file2.o...] [options]");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine("  Build Mode (select one; defaults to -dynamic):");
+            Console.WriteLine("    -dynamic");
+            Console.WriteLine("      generate a dynamically linked Kamek binary for use with the loader");
+            Console.WriteLine("    -static=0x80001900");
+            Console.WriteLine("      generate a blob of code which must be loaded at the specified Wii RAM address");
+            Console.WriteLine();
+            Console.WriteLine("  Game Configuration:");
+            Console.WriteLine("    -externals=file.txt");
+            Console.WriteLine("      specify the addresses of external symbols that exist in the target game");
+            Console.WriteLine("    -versions=file.txt");
+            Console.WriteLine("      specify the different executable versions that Kamek can link binaries for");
+            Console.WriteLine("    -select-version=key");
+            Console.WriteLine("      build only one version from the versions file, and ignore the rest");
+            Console.WriteLine("      (can be specified multiple times)");
+            Console.WriteLine();
+            Console.WriteLine("  Outputs (at least one is required; $KV$ will be replaced with the version name):");
+            Console.WriteLine("    -output-kamek=file.$KV$.bin");
+            Console.WriteLine("      write a Kamek binary to for use with the loader (-dynamic only)");
+            Console.WriteLine("    -output-riiv=file.$KV$.xml");
+            Console.WriteLine("      write a Riivolution XML fragment (-static only)");
+            Console.WriteLine("    -output-gecko=file.$KV$.xml");
+            Console.WriteLine("      write a list of Gecko codes (-static only)");
+            Console.WriteLine("    -input-dol=file.$KV$.dol -output-dol=file2.$KV$.dol");
+            Console.WriteLine("      apply these patches and generate a modified DOL (-static only)");
+            Console.WriteLine("    -output-code=file.$KV$.bin");
+            Console.WriteLine("      write the combined code+data segment to file.bin (for manual injection or debugging)");
         }
     }
 }
