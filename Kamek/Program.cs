@@ -22,6 +22,7 @@ namespace Kamek
             string inputDolPath = null, outputDolPath = null;
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
+            var selectedVersions = new List<String>();
 
             foreach (var arg in args)
             {
@@ -47,6 +48,8 @@ namespace Kamek
                         ReadExternals(externals, arg.Substring(11));
                     else if (arg.StartsWith("-versions="))
                         versions = new VersionInfo(arg.Substring(10));
+                    else if (arg.StartsWith("-select-version="))
+                        selectedVersions.Add(arg.Substring(16));
                     else
                         Console.WriteLine("warning: unrecognised argument: {0}", arg);
                 }
@@ -84,8 +87,31 @@ namespace Kamek
             }
 
 
+            // Do safety checks
+            if (versions.Mappers.Count > 1 && selectedVersions.Count != 1)
+            {
+                bool ambiguousOutputPath = false;
+                ambiguousOutputPath |= (outputKamekPath != null && !outputKamekPath.Contains("$KV$"));
+                ambiguousOutputPath |= (outputRiivPath != null && !outputRiivPath.Contains("$KV$"));
+                ambiguousOutputPath |= (outputGeckoPath != null && !outputGeckoPath.Contains("$KV$"));
+                ambiguousOutputPath |= (outputCodePath != null && !outputCodePath.Contains("$KV$"));
+                ambiguousOutputPath |= (outputDolPath != null && !outputDolPath.Contains("$KV$"));
+                if (ambiguousOutputPath)
+                {
+                    Console.WriteLine("ERROR: this configuration builds for multiple game versions, and some of the outputs will be overwritten");
+                    Console.WriteLine("add the $KV$ placeholder to your output paths, or use -select-version=.. to only build one version");
+                    return;
+                }
+            }
+
+
             foreach (var version in versions.Mappers)
             {
+                if (selectedVersions.Count > 0 && !selectedVersions.Contains(version.Key))
+                {
+                    Console.WriteLine("(skipping version {0} as it's not selected)", version.Key);
+                    continue;
+                }
                 Console.WriteLine("linking version {0}...", version.Key);
 
                 var linker = new Linker(version.Value);
@@ -110,7 +136,7 @@ namespace Kamek
 
                 if (outputDolPath != null)
                 {
-                    var dol = new Dol(new FileStream(inputDolPath, FileMode.Open));
+                    var dol = new Dol(new FileStream(inputDolPath.Replace("$KV$", version.Key), FileMode.Open));
                     kf.InjectIntoDol(dol);
 
                     var outpath = outputDolPath.Replace("$KV$", version.Key);
