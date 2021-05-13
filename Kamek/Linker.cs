@@ -313,7 +313,8 @@ namespace Kamek
                 if (addr.StartsWith("0x") || addr.StartsWith("0X"))
                     addr = addr.Substring(2);
                 var parsedAddr = uint.Parse(addr, System.Globalization.NumberStyles.AllowHexSpecifier);
-                return new Symbol { address = new Word(WordType.AbsoluteAddr, parsedAddr) };
+                var mappedAddr = Mapper.Remap(parsedAddr);
+                return new Symbol { address = new Word(WordType.AbsoluteAddr, mappedAddr) };
             }
 
             throw new InvalidDataException("undefined symbol " + name);
