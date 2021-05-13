@@ -99,30 +99,33 @@ kamek_bl: .macro addr
 	bl __kAutoMap_&&addr
 	.endm
 
-// kamek_ref
-//   Reference a direct data address from the original game executable.
+// kamek_ref_address
+//   Load a direct data address from the original game executable.
 //   This allows Kamek's address mapping functionality to be used without
 //   having to add single-use externals.
-// Examples:
+// Example:
 //   Set r3 to this address (mapped):
 //     kamek_ref_address r3, 0x8098DC28
-//   Load the 32-bit value at this address into r3:
-//     kamek_ref lwz, r3, 0x8042A4A8
-//   Store r7 as a byte at this address:
-//     kamek_ref stb, r3, 0x80B07DD0
-//   Load the 32-bit float at this address into f1, using r10 as a temporary:
-//     kamek_ref_float f1, 0x80AD3400, r10
 kamek_ref_address: .macro output_reg, addr
 	.extern __kAutoMap_&&addr
 	lis output_reg, __kAutoMap_&&addr@ha
 	addi output_reg, output_reg, __kAutoMap_&&addr@l
 	.endm
-kamek_ref: .macro insn, output_reg, addr
-	.extern __kAutoMap_&&addr
-	lis output_reg, __kAutoMap_&&addr@ha
-	insn output_reg, __kAutoMap_&&addr@l(output_reg)
-	.endm
-kamek_ref_float: .macro insn, output_reg, addr, temp_reg
+
+// kamek_ref
+//   Reference something at a direct address from the original executable.
+//   This requires you to supply a temporary register which you know is
+//    safe to overwrite.
+//   When loading an integer, you can supply the same output_reg and temp_reg.
+//
+// Examples:
+//   Load the 32-bit value at this address into r3:
+//     kamek_ref lwz, r3, 0x8042A4A8, r3
+//   Store r7 as a byte at this address, using r10 as a temporary:
+//     kamek_ref stb, r7, 0x80B07DD0, r10
+//   Load or store the 32-bit float at this address into f1, using r10 as a temporary:
+//     kamek_ref f1, 0x80AD3400, r10
+kamek_ref: .macro insn, output_reg, addr, temp_reg
 	.extern __kAutoMap_&&addr
 	lis temp_reg, __kAutoMap_&&addr@ha
 	insn output_reg, __kAutoMap_&&addr@l(temp_reg)
