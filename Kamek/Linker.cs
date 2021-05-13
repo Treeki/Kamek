@@ -308,6 +308,13 @@ namespace Kamek
                 return _globalSymbols[name];
             if (_externalSymbols.ContainsKey(name))
                 return new Symbol { address = new Word(WordType.AbsoluteAddr, _externalSymbols[name]) };
+            if (name.StartsWith("__kAutoMap_")) {
+                var addr = name.Substring(11);
+                if (addr.StartsWith("0x") || addr.StartsWith("0X"))
+                    addr = addr.Substring(2);
+                var parsedAddr = uint.Parse(addr, System.Globalization.NumberStyles.AllowHexSpecifier);
+                return new Symbol { address = new Word(WordType.AbsoluteAddr, parsedAddr) };
+            }
 
             throw new InvalidDataException("undefined symbol " + name);
         }

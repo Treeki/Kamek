@@ -1,0 +1,145 @@
+kctWrite .equ 1
+kctConditionalWrite .equ 2
+kctInjectBranch .equ 3
+kctInjectCall .equ 4
+kctPatchExit .equ 5
+
+// general hook definition macros
+kmHook0: .macro type
+	.section ".kamek"
+	.long 0, type
+	.previous
+	.endm
+kmHook1: .macro type, arg0
+	.section ".kamek"
+	.long 1, type, arg0
+	.previous
+	.endm
+kmHook2: .macro type, arg0, arg1
+	.section ".kamek"
+	.long 2, type, arg0, arg1
+	.previous
+	.endm
+kmHook3: .macro type, arg0, arg1, arg2
+	.section ".kamek"
+	.long 3, type, arg0, arg1, arg2
+	.previous
+	.endm
+kmHook4: .macro type, arg0, arg1, arg2, arg3
+	.section ".kamek"
+	.long 4, type, arg0, arg1, arg2, arg3
+	.previous
+	.endm
+
+// kmCondWrite
+//   Write value to address, conditionally
+kmCondWritePointer: .macro addr, original, value
+	kmHook4 kctConditionalWrite, 1, addr, value, original
+	.endm
+kmCondWrite32: .macro addr, original, value
+	kmHook4 kctConditionalWrite, 2, addr, value, original
+	.endm
+kmCondWrite16: .macro addr, original, value
+	kmHook4 kctConditionalWrite, 3, addr, value, original
+	.endm
+kmCondWrite8: .macro addr, original, value
+	kmHook4 kctConditionalWrite, 4, addr, value, original
+	.endm
+
+// kmWrite
+//   Write value to address
+kmWritePointer: .macro addr, ptr
+	kmHook3 kctWrite, 1, addr, ptr
+	.endm
+kmWrite32: .macro addr, value
+	kmHook3 kctWrite, 2, addr, value
+	.endm
+kmWrite16: .macro addr, value
+	kmHook3 kctWrite, 3, addr, value
+	.endm
+kmWrite8: .macro addr, value
+	kmHook3 kctWrite, 4, addr, value
+	.endm
+
+// kmBranch, kmCall
+//   Set up a branch from a specific instruction to a specific address
+kmBranch: .macro addr, ptr
+	kmHook2 kctInjectBranch, addr, ptr
+	.endm
+kmCall: .macro addr, ptr
+	kmHook2 kctInjectCall, addr, ptr
+	.endm
+
+// kmBranchDef
+//   Set up a branch (b) from a specific instruction to a function defined
+//   directly underneath.
+kmBranchDef: .macro addr
+	kmBranch addr, __kUserFuncBranch\@
+	__kUserFuncBranch\@:
+	.endm
+
+// kmCallDef
+//   Set up a call (bl) from a specific instruction to a function defined
+//   directly underneath.
+kmCallDef: .macro addr
+	kmCall addr, __kUserFuncCall\@
+	__kUserFuncCall\@:
+	.endm
+
+// kamek_b, kamek_bl
+//   Branch to or call a direct code address from the original game executable.
+//   This allows Kamek's address mapping functionality to be used without
+//   having to add single-use externals.
+kamek_b: .macro addr
+	.extern __kAutoMap_&&addr
+	b __kAutoMap_&&addr
+	.endm
+kamek_bl: .macro addr
+	.extern __kAutoMap_&&addr
+	bl __kAutoMap_&&addr
+	.endm
+
+// kamek_ref
+//   Reference a direct data address from the original game executable.
+//   This allows Kamek's address mapping functionality to be used without
+//   having to add single-use externals.
+// Examples:
+//   Set r3 to this address (mapped):
+//     kamek_ref_address r3, 0x8098DC28
+//   Load the 32-bit value at this address into r3:
+//     kamek_ref lwz, r3, 0x8042A4A8
+//   Store r7 as a byte at this address:
+//     kamek_ref stb, r3, 0x80B07DD0
+//   Load the 32-bit float at this address into f1, using r10 as a temporary:
+//     kamek_ref_float f1, 0x80AD3400, r10
+kamek_ref_address: .macro output_reg, addr
+	.extern __kAutoMap_&&addr
+	lis output_reg, __kAutoMap_&&addr@ha
+	addi output_reg, output_reg, __kAutoMap_&&addr@l
+	.endm
+kamek_ref: .macro insn, output_reg, addr
+	.extern __kAutoMap_&&addr
+	lis output_reg, __kAutoMap_&&addr@ha
+	insn output_reg, __kAutoMap_&&addr@l(output_reg)
+	.endm
+kamek_ref_float: .macro insn, output_reg, addr, temp_reg
+	.extern __kAutoMap_&&addr
+	lis temp_reg, __kAutoMap_&&addr@ha
+	insn output_reg, __kAutoMap_&&addr@l(temp_reg)
+	.endm
+
+// kamek_const_float
+//   Load a constant float.
+//   This requires a temporary non-float register.
+kamek_const_float: .macro output_reg, float_value, temp_reg
+	.data
+__kConstFloat\@: .float float_value
+	.previous
+	lis temp_reg, (__kConstFloat\@)@ha
+	lfs output_reg, (__kConstFloat\@)@l(temp_reg)
+	.endm
+
+
+// Default to .text so that Kamek macros work
+.text
+
