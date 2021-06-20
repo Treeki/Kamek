@@ -203,6 +203,51 @@ namespace Kamek
             return string.Join("\n", elements);
         }
 
+        public string PackDolphin()
+        {
+            if (_baseAddress.Type == WordType.RelativeAddr)
+                throw new InvalidOperationException("cannot pack a dynamically linked binary as a Dolphin patch");
+
+            var elements = new List<string>();
+
+            // add the big patch
+            int i = 0;
+            while (i < _codeBlob.Length)
+            {
+                var sb = new StringBuilder(27);
+                sb.AppendFormat("0x{0:X8}:", _baseAddress.Value + i);
+
+                int lineLength;
+                switch (_codeBlob.Length - i)
+                {
+                    case 1:
+                        lineLength = 1;
+                        sb.Append("byte:0x000000");
+                        break;
+                    case 2:
+                    case 3:
+                        lineLength = 2;
+                        sb.Append("word:0x0000");
+                        break;
+                    default:
+                        lineLength = 4;
+                        sb.Append("dword:0x");
+                        break;
+                }
+
+                for (int j = 0; j < lineLength; j++, i++)
+                    sb.AppendFormat("{0:X2}", _codeBlob[i]);
+
+                elements.Add(sb.ToString());
+            }
+
+            // add individual patches
+            foreach (var pair in _commands)
+                elements.Add(pair.Value.PackForDolphin());
+
+            return string.Join("\n", elements);
+        }
+
         public string PackGeckoCodes()
         {
             if (_baseAddress.Type == WordType.RelativeAddr)

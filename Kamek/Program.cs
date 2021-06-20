@@ -18,7 +18,7 @@ namespace Kamek
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
             uint? baseAddress = null;
-            string outputKamekPath = null, outputRiivPath = null, outputGeckoPath = null, outputCodePath = null;
+            string outputKamekPath = null, outputRiivPath = null, outputDolphinPath = null, outputGeckoPath = null, outputCodePath = null;
             string inputDolPath = null, outputDolPath = null;
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
@@ -41,6 +41,8 @@ namespace Kamek
                         outputKamekPath = arg.Substring(14);
                     else if (arg.StartsWith("-output-riiv="))
                         outputRiivPath = arg.Substring(13);
+                    else if (arg.StartsWith("-output-dolphin="))
+                        outputDolphinPath = arg.Substring(16);
                     else if (arg.StartsWith("-output-gecko="))
                         outputGeckoPath = arg.Substring(14);
                     else if (arg.StartsWith("-output-code="))
@@ -80,7 +82,7 @@ namespace Kamek
                 Console.WriteLine("no input files specified");
                 return;
             }
-            if (outputKamekPath == null && outputRiivPath == null && outputGeckoPath == null && outputCodePath == null && outputDolPath == null)
+            if (outputKamekPath == null && outputRiivPath == null && outputDolphinPath == null && outputGeckoPath == null && outputCodePath == null && outputDolPath == null)
             {
                 Console.WriteLine("no output path(s) specified");
                 return;
@@ -98,6 +100,7 @@ namespace Kamek
                 bool ambiguousOutputPath = false;
                 ambiguousOutputPath |= (outputKamekPath != null && !outputKamekPath.Contains("$KV$"));
                 ambiguousOutputPath |= (outputRiivPath != null && !outputRiivPath.Contains("$KV$"));
+                ambiguousOutputPath |= (outputDolphinPath != null && !outputDolphinPath.Contains("$KV$"));
                 ambiguousOutputPath |= (outputGeckoPath != null && !outputGeckoPath.Contains("$KV$"));
                 ambiguousOutputPath |= (outputCodePath != null && !outputCodePath.Contains("$KV$"));
                 ambiguousOutputPath |= (outputDolPath != null && !outputDolPath.Contains("$KV$"));
@@ -134,6 +137,8 @@ namespace Kamek
                     File.WriteAllBytes(outputKamekPath.Replace("$KV$", version.Key), kf.Pack());
                 if (outputRiivPath != null)
                     File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution());
+                if (outputDolphinPath != null)
+                    File.WriteAllText(outputDolphinPath.Replace("$KV$", version.Key), kf.PackDolphin());
                 if (outputGeckoPath != null)
                     File.WriteAllText(outputGeckoPath.Replace("$KV$", version.Key), kf.PackGeckoCodes());
                 if (outputCodePath != null)
@@ -204,6 +209,8 @@ namespace Kamek
             Console.WriteLine("      write a Kamek binary to for use with the loader (-dynamic only)");
             Console.WriteLine("    -output-riiv=file.$KV$.xml");
             Console.WriteLine("      write a Riivolution XML fragment (-static only)");
+            Console.WriteLine("    -output-dolphin=file.$KV$.ini");
+            Console.WriteLine("      write a Dolphin INI fragment (-static only)");
             Console.WriteLine("    -output-gecko=file.$KV$.xml");
             Console.WriteLine("      write a list of Gecko codes (-static only)");
             Console.WriteLine("    -input-dol=file.$KV$.dol -output-dol=file2.$KV$.dol");
