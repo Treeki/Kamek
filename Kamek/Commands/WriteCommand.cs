@@ -107,6 +107,25 @@ namespace Kamek.Commands
             return null;
         }
 
+        public override string PackForDolphin()
+        {
+            Address.AssertAbsolute();
+            if (ValueType == Type.Pointer)
+                Value.AssertAbsolute();
+            else
+                Value.AssertValue();
+
+            switch (ValueType)
+            {
+                case Type.Value8: return string.Format("0x{0:X8}:byte:0x000000{1:X2}", Address.Value, Value.Value);
+                case Type.Value16: return string.Format("0x{0:X8}:word:0x0000{1:X4}", Address.Value, Value.Value);
+                case Type.Value32:
+                case Type.Pointer: return string.Format("0x{0:X8}:dword:0x{1:X8}", Address.Value, Value.Value);
+            }
+
+            return null;
+        }
+
         public override IEnumerable<ulong> PackGeckoCodes()
         {
             Address.AssertAbsolute();

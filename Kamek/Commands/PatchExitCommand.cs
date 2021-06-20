@@ -31,6 +31,11 @@ namespace Kamek.Commands
             throw new NotImplementedException();
         }
 
+        public override string PackForDolphin()
+        {
+            throw new NotImplementedException();
+        }
+
         public override IEnumerable<ulong> PackGeckoCodes()
         {
             throw new NotImplementedException();
