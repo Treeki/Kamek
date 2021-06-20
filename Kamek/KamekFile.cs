@@ -206,7 +206,7 @@ namespace Kamek
         public string PackGeckoCodes()
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
-                throw new InvalidOperationException("cannot pack a dynamically linked binary as a Riivolution patch");
+                throw new InvalidOperationException("cannot pack a dynamically linked binary as a Gecko code");
 
             var codes = new List<ulong>();
 
