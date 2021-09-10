@@ -9,21 +9,48 @@ namespace Kamek.Commands
 {
     class PatchExitCommand : Command
     {
+        public readonly Word FunctionStart;
         public readonly Word Target;
-        public Word EndAddress;
 
-        public PatchExitCommand(Word source, Word target)
-            : base(Ids.Branch, source)
+        public PatchExitCommand(Word functionStart, Word target)
+            : base(Ids.Branch, null)
         {
+            FunctionStart = functionStart;
             Target = target;
         }
 
         public override void WriteArguments(BinaryWriter bw)
         {
-            EndAddress.AssertNotAmbiguous();
             Target.AssertNotAmbiguous();
-            bw.WriteBE(EndAddress.Value);
             bw.WriteBE(Target.Value);
+        }
+
+        public override void CalculateAddress(KamekFile file)
+        {
+            // Do some reasonableness checks.
+            // For now, we'll only work on functions ending in a blr
+            var functionSize = file.QuerySymbolSize(FunctionStart);
+            if (functionSize < 4)
+            {
+                throw new InvalidOperationException("Function too small!");
+            }
+            var functionEnd = FunctionStart + (functionSize - 4);
+            if (file.ReadUInt32(functionEnd) != 0x4E800020)
+            {
+                throw new InvalidOperationException("Function does not end in blr");
+            }
+
+            // Just to be extra sure, are there any other returns in this function?
+            for (var check = FunctionStart; check < functionEnd; check += 4)
+            {
+                var insn = file.ReadUInt32(check);
+                if ((insn & 0xFC00FFFF) == 0x4C000020)
+                {
+                    throw new InvalidOperationException("Function contains a return partway through");
+                }
+            }
+
+            Address = functionEnd;
         }
 
         public override string PackForRiivolution()
@@ -43,33 +70,9 @@ namespace Kamek.Commands
 
         public override bool Apply(KamekFile file)
         {
-            // Do some reasonableness checks.
-            // For now, we'll only work on functions ending in a blr
-            var functionSize = file.QuerySymbolSize(Address);
-            if (functionSize < 4)
+            if (Address.Value.IsAbsolute && Target.IsAbsolute && file.Contains(Address.Value))
             {
-                throw new InvalidOperationException("Function too small!");
-            }
-            var functionEnd = Address + (functionSize - 4);
-            if (file.ReadUInt32(functionEnd) != 0x4E800020)
-            {
-                throw new InvalidOperationException("Function does not end in blr");
-            }
-
-            // Just to be extra sure, are there any other returns in this function?
-            for (var check = Address; check < functionEnd; check += 4)
-            {
-                var insn = file.ReadUInt32(check);
-                if ((insn & 0xFC00FFFF) == 0x4C000020)
-                {
-                    throw new InvalidOperationException("Function contains a return partway through");
-                }
-            }
-
-            EndAddress = functionEnd;
-            if (EndAddress.IsAbsolute && Target.IsAbsolute && file.Contains(Address))
-            {
-                file.WriteUInt32(EndAddress, GenerateInstruction());
+                file.WriteUInt32(Address.Value, GenerateInstruction());
                 return true;
             }
 
@@ -79,7 +82,7 @@ namespace Kamek.Commands
 
         private uint GenerateInstruction()
         {
-            long delta = Target - EndAddress;
+            long delta = Target - Address.Value;
             uint insn = (Id == Ids.BranchLink) ? 0x48000001U : 0x48000000U;
             insn |= ((uint)delta & 0x3FFFFFC);
             return insn;

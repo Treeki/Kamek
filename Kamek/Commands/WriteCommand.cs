@@ -75,7 +75,7 @@ namespace Kamek.Commands
 
         public override string PackForRiivolution()
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             if (ValueType == Type.Pointer)
                 Value.AssertAbsolute();
             else
@@ -87,20 +87,20 @@ namespace Kamek.Commands
 
                 switch (ValueType)
                 {
-                    case Type.Value8: return string.Format("<memory offset='0x{0:X8}' value='{1:X2}' original='{2:X2}' />", Address.Value, Value.Value, Original.Value.Value);
-                    case Type.Value16: return string.Format("<memory offset='0x{0:X8}' value='{1:X4}' original='{2:X4}' />", Address.Value, Value.Value, Original.Value.Value);
+                    case Type.Value8: return string.Format("<memory offset='0x{0:X8}' value='{1:X2}' original='{2:X2}' />", Address.Value.Value, Value.Value, Original.Value.Value);
+                    case Type.Value16: return string.Format("<memory offset='0x{0:X8}' value='{1:X4}' original='{2:X4}' />", Address.Value.Value, Value.Value, Original.Value.Value);
                     case Type.Value32:
-                    case Type.Pointer: return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' original='{2:X8}' />", Address.Value, Value.Value, Original.Value.Value);
+                    case Type.Pointer: return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' original='{2:X8}' />", Address.Value.Value, Value.Value, Original.Value.Value);
                 }
             }
             else
             {
                 switch (ValueType)
                 {
-                    case Type.Value8: return string.Format("<memory offset='0x{0:X8}' value='{1:X2}' />", Address.Value, Value.Value);
-                    case Type.Value16: return string.Format("<memory offset='0x{0:X8}' value='{1:X4}' />", Address.Value, Value.Value);
+                    case Type.Value8: return string.Format("<memory offset='0x{0:X8}' value='{1:X2}' />", Address.Value.Value, Value.Value);
+                    case Type.Value16: return string.Format("<memory offset='0x{0:X8}' value='{1:X4}' />", Address.Value.Value, Value.Value);
                     case Type.Value32:
-                    case Type.Pointer: return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' />", Address.Value, Value.Value);
+                    case Type.Pointer: return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' />", Address.Value.Value, Value.Value);
                 }
             }
 
@@ -109,7 +109,7 @@ namespace Kamek.Commands
 
         public override IEnumerable<ulong> PackGeckoCodes()
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             if (ValueType == Type.Pointer)
                 Value.AssertAbsolute();
             else
@@ -117,10 +117,10 @@ namespace Kamek.Commands
 
             if (Original.HasValue)
                 throw new NotImplementedException("conditional writes not yet supported for gecko");
-            if (Address.Value >= 0x90000000)
+            if (Address.Value.Value >= 0x90000000)
                 throw new NotImplementedException("MEM2 writes not yet supported for gecko");
 
-            ulong code = ((ulong)(Address.Value & 0x1FFFFFF) << 32) | Value.Value;
+            ulong code = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | Value.Value;
             switch (ValueType)
             {
                 case Type.Value16: code |= 0x2000000UL << 32; break;
@@ -133,7 +133,7 @@ namespace Kamek.Commands
 
         public override void ApplyToDol(Dol dol)
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             if (ValueType == Type.Pointer)
                 Value.AssertAbsolute();
             else
@@ -145,14 +145,14 @@ namespace Kamek.Commands
                 switch (ValueType)
                 {
                     case Type.Value8:
-                        patchOK = (dol.ReadByte(Address.Value) == Original.Value.Value);
+                        patchOK = (dol.ReadByte(Address.Value.Value) == Original.Value.Value);
                         break;
                     case Type.Value16:
-                        patchOK = (dol.ReadUInt16(Address.Value) == Original.Value.Value);
+                        patchOK = (dol.ReadUInt16(Address.Value.Value) == Original.Value.Value);
                         break;
                     case Type.Value32:
                     case Type.Pointer:
-                        patchOK = (dol.ReadUInt32(Address.Value) == Original.Value.Value);
+                        patchOK = (dol.ReadUInt32(Address.Value.Value) == Original.Value.Value);
                         break;
                 }
                 if (!patchOK)
@@ -161,10 +161,10 @@ namespace Kamek.Commands
 
             switch (ValueType)
             {
-                case Type.Value8: dol.WriteByte(Address.Value, (byte)Value.Value); break;
-                case Type.Value16: dol.WriteUInt16(Address.Value, (ushort)Value.Value); break;
+                case Type.Value8: dol.WriteByte(Address.Value.Value, (byte)Value.Value); break;
+                case Type.Value16: dol.WriteUInt16(Address.Value.Value, (ushort)Value.Value); break;
                 case Type.Value32:
-                case Type.Pointer: dol.WriteUInt32(Address.Value, Value.Value); break;
+                case Type.Pointer: dol.WriteUInt32(Address.Value.Value, Value.Value); break;
             }
         }
 

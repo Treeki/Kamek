@@ -35,35 +35,35 @@ namespace Kamek.Commands
 
         public override void ApplyToDol(Dol dol)
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
             switch (Id)
             {
                 case Ids.Rel24:
-                    long delta = Target - Address;
-                    uint insn = dol.ReadUInt32(Address.Value) & 0xFC000003;
+                    long delta = Target - Address.Value;
+                    uint insn = dol.ReadUInt32(Address.Value.Value) & 0xFC000003;
                     insn |= ((uint)delta & 0x3FFFFFC);
-                    dol.WriteUInt32(Address.Value, insn);
+                    dol.WriteUInt32(Address.Value.Value, insn);
                     break;
 
                 case Ids.Addr32:
-                    dol.WriteUInt32(Address.Value, Target.Value);
+                    dol.WriteUInt32(Address.Value.Value, Target.Value);
                     break;
 
                 case Ids.Addr16Lo:
-                    dol.WriteUInt16(Address.Value, (ushort)(Target.Value & 0xFFFF));
+                    dol.WriteUInt16(Address.Value.Value, (ushort)(Target.Value & 0xFFFF));
                     break;
 
                 case Ids.Addr16Hi:
-                    dol.WriteUInt16(Address.Value, (ushort)(Target.Value >> 16));
+                    dol.WriteUInt16(Address.Value.Value, (ushort)(Target.Value >> 16));
                     break;
 
                 case Ids.Addr16Ha:
                     ushort v = (ushort)(Target.Value >> 16);
                     if ((Target.Value & 0x8000) == 0x8000)
                         v++;
-                    dol.WriteUInt16(Address.Value, v);
+                    dol.WriteUInt16(Address.Value.Value, v);
                     break;
 
                 default:
@@ -76,12 +76,12 @@ namespace Kamek.Commands
             switch (Id)
             {
                 case Ids.Rel24:
-                    if ((Address.IsAbsolute && Target.IsAbsolute) || (Address.IsRelative && Target.IsRelative))
+                    if ((Address.Value.IsAbsolute && Target.IsAbsolute) || (Address.Value.IsRelative && Target.IsRelative))
                     {
-                        long delta = Target - Address;
-                        uint insn = file.ReadUInt32(Address) & 0xFC000003;
+                        long delta = Target - Address.Value;
+                        uint insn = file.ReadUInt32(Address.Value) & 0xFC000003;
                         insn |= ((uint)delta & 0x3FFFFFC);
-                        file.WriteUInt32(Address, insn);
+                        file.WriteUInt32(Address.Value, insn);
 
                         return true;
                     }
@@ -90,7 +90,7 @@ namespace Kamek.Commands
                 case Ids.Addr32:
                     if (Target.IsAbsolute)
                     {
-                        file.WriteUInt32(Address, Target.Value);
+                        file.WriteUInt32(Address.Value, Target.Value);
                         return true;
                     }
                     break;
@@ -98,7 +98,7 @@ namespace Kamek.Commands
                 case Ids.Addr16Lo:
                     if (Target.IsAbsolute)
                     {
-                        file.WriteUInt16(Address, (ushort)(Target.Value & 0xFFFF));
+                        file.WriteUInt16(Address.Value, (ushort)(Target.Value & 0xFFFF));
                         return true;
                     }
                     break;
@@ -106,7 +106,7 @@ namespace Kamek.Commands
                 case Ids.Addr16Hi:
                     if (Target.IsAbsolute)
                     {
-                        file.WriteUInt16(Address, (ushort)(Target.Value >> 16));
+                        file.WriteUInt16(Address.Value, (ushort)(Target.Value >> 16));
                         return true;
                     }
                     break;
@@ -117,7 +117,7 @@ namespace Kamek.Commands
                         ushort v = (ushort)(Target.Value >> 16);
                         if ((Target.Value & 0x8000) == 0x8000)
                             v++;
-                        file.WriteUInt16(Address, v);
+                        file.WriteUInt16(Address.Value, v);
                         return true;
                     }
                     break;

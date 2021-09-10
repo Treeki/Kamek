@@ -25,18 +25,18 @@ namespace Kamek.Commands
 
         public override string PackForRiivolution()
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
-            return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' />", Address.Value, GenerateInstruction());
+            return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' />", Address.Value.Value, GenerateInstruction());
         }
 
         public override IEnumerable<ulong> PackGeckoCodes()
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
-            ulong code = ((ulong)(Address.Value & 0x1FFFFFF) << 32) | GenerateInstruction();
+            ulong code = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | GenerateInstruction();
             code |= 0x4000000UL << 32;
 
             return new ulong[1] { code };
@@ -44,9 +44,9 @@ namespace Kamek.Commands
 
         public override bool Apply(KamekFile file)
         {
-            if (Address.IsAbsolute && Target.IsAbsolute && file.Contains(Address))
+            if (Address.Value.IsAbsolute && Target.IsAbsolute && file.Contains(Address.Value))
             {
-                file.WriteUInt32(Address, GenerateInstruction());
+                file.WriteUInt32(Address.Value, GenerateInstruction());
                 return true;
             }
 
@@ -55,16 +55,16 @@ namespace Kamek.Commands
 
         public override void ApplyToDol(Dol dol)
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
-            dol.WriteUInt32(Address.Value, GenerateInstruction());
+            dol.WriteUInt32(Address.Value.Value, GenerateInstruction());
         }
 
 
         private uint GenerateInstruction()
         {
-            long delta = Target - Address;
+            long delta = Target - Address.Value;
             uint insn = (Id == Ids.BranchLink) ? 0x48000001U : 0x48000000U;
             insn |= ((uint)delta & 0x3FFFFFC);
             return insn;

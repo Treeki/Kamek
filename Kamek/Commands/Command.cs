@@ -35,9 +35,18 @@ namespace Kamek.Commands
         }
 
         public readonly Ids Id;
-        public readonly Word Address;
 
-        protected Command(Ids id, Word address)
+        private Word? _Address;
+        public Word? Address
+        {
+            get => _Address;
+            protected set
+            {
+                _Address = value;
+            }
+        }
+
+        protected Command(Ids id, Word? address)
         {
             Id = id;
             Address = address;
@@ -48,5 +57,13 @@ namespace Kamek.Commands
         public abstract IEnumerable<ulong> PackGeckoCodes();
         public abstract bool Apply(KamekFile file);
         public abstract void ApplyToDol(Dol dol);
+
+        public virtual void CalculateAddress(KamekFile file) {}
+
+        public void AssertAddressNonNull()
+        {
+            if (!Address.HasValue)
+                throw new NullReferenceException(string.Format("{0} command must have an address in this context", Id));
+        }
     }
 }
