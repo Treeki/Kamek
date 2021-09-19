@@ -6,6 +6,9 @@ struct KBHeader {
 	u16 version;
 	u32 bssSize;
 	u32 codeSize;
+	u32 ctorStart;
+	u32 ctorEnd;
+	u32 _pad[2];
 };
 
 
@@ -133,13 +136,14 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
 	const KBHeader *header = (const KBHeader *)binary;
 	if (header->magic1 != 'Kame' || header->magic2 != 'k\0')
 		kamekError(funcs, "FATAL ERROR: Corrupted file, please check your game's Kamek files");
-	if (header->version != 1) {
+	if (header->version != 2) {
 		char err[512];
 		funcs->sprintf(err, "FATAL ERROR: Incompatible file (version %d), please upgrade your Kamek Loader", header->version);
 		kamekError(funcs, err);
 	}
 	
-	funcs->OSReport("header: bssSize=%u, codeSize=%u\n", header->bssSize, header->codeSize);
+	funcs->OSReport("header: bssSize=%u, codeSize=%u, ctors=%u-%u\n",
+		header->bssSize, header->codeSize, header->ctorStart, header->ctorEnd);
 
 	u32 textSize = header->codeSize + header->bssSize;
 	u32 text = (u32)funcs->kamekAlloc(textSize, true, funcs);
@@ -196,6 +200,11 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
 			sync
 			icbi r0, cacheAddr
 		}
+	}
+
+	typedef void (*Func)(void);
+	for (Func* f = (Func*)(text + header->ctorStart); f < (Func*)(text + header->ctorEnd); f++) {
+		(*f)();
 	}
 
 	__sync();

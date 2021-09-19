@@ -21,6 +21,8 @@ namespace Kamek
         private Word _baseAddress;
         private byte[] _codeBlob;
         private long _bssSize;
+        private long _ctorStart;
+        private long _ctorEnd;
 
         public Word BaseAddress { get { return _baseAddress; } }
         public byte[] CodeBlob { get { return _codeBlob; } }
@@ -72,6 +74,8 @@ namespace Kamek
 
             _baseAddress = linker.BaseAddress;
             _bssSize = linker.BssSize;
+            _ctorStart = linker.CtorStart - linker.OutputStart;
+            _ctorEnd = linker.CtorEnd - linker.OutputStart;
 
             _hooks = new List<Hooks.Hook>();
             _commands = new Dictionary<Word, Commands.Command>();
@@ -132,10 +136,14 @@ namespace Kamek
             {
                 using (var bw = new BinaryWriter(ms))
                 {
-                    bw.WriteBE((uint)0x4B616D65); // 'Kamek\0\0\1'
-                    bw.WriteBE((uint)0x6B000001);
+                    bw.WriteBE((uint)0x4B616D65); // 'Kamek\0\0\2'
+                    bw.WriteBE((uint)0x6B000002);
                     bw.WriteBE((uint)_bssSize);
                     bw.WriteBE((uint)_codeBlob.Length);
+                    bw.WriteBE((uint)_ctorStart);
+                    bw.WriteBE((uint)_ctorEnd);
+                    bw.WriteBE((uint)0);
+                    bw.WriteBE((uint)0);
 
                     bw.Write(_codeBlob);
 
