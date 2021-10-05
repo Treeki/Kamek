@@ -4,6 +4,10 @@ int loadIntoNSMBW();
 kmCondWritePointer(0x80328478, 0x8015BC60, loadIntoNSMBW); // EU
 kmCondWritePointer(0x80328130, 0x8015BB20, loadIntoNSMBW); // US
 kmCondWritePointer(0x80327E98, 0x8015B930, loadIntoNSMBW); // JP
+kmCondWritePointer(0x80334E60, 0x8015C060, loadIntoNSMBW); // KOR
+kmCondWritePointer(0x80333218, 0x8015C060, loadIntoNSMBW); // TWN
+kmCondWritePointer(0x8032D348, 0x8015CF30, loadIntoNSMBW); // CHN
+
 
 typedef void *(*EGG_Heap_Alloc_t) (u32 size, s32 align, void *heap);
 typedef void (*EGG_Heap_Free_t) (void *buffer, void *heap);
@@ -28,7 +32,7 @@ void freeAdapter(void *buffer, bool isForCode, const loaderFunctions *funcs) {
 }
 
 
-const loaderFunctionsEx functions_eu = {
+const loaderFunctionsEx functions_p = {
 	{(OSReport_t) 0x8015F870,
 	(OSFatal_t) 0x801AF710,
 	(DVDConvertPathToEntrynum_t) 0x801CA7C0,
@@ -43,7 +47,7 @@ const loaderFunctionsEx functions_eu = {
 	(void **) 0x80377F48,
 	(void **) 0x8042A72C
 };
-const loaderFunctionsEx functions_us = {
+const loaderFunctionsEx functions_e = {
 	{(OSReport_t) 0x8015F730,
 	(OSFatal_t) 0x801AF5D0,
 	(DVDConvertPathToEntrynum_t) 0x801CA680,
@@ -58,7 +62,7 @@ const loaderFunctionsEx functions_us = {
 	(void **) 0x80377C48,
 	(void **) 0x8042A44C
 };
-const loaderFunctionsEx functions_jp = {
+const loaderFunctionsEx functions_j = {
 	{(OSReport_t) 0x8015F540,
 	(OSFatal_t) 0x801AF3E0,
 	(DVDConvertPathToEntrynum_t) 0x801CA490,
@@ -73,6 +77,51 @@ const loaderFunctionsEx functions_jp = {
 	(void **) 0x803779C8,
 	(void **) 0x8042A16C
 };
+const loaderFunctionsEx functions_k = {
+	{(OSReport_t) 0x8015FC70,
+	(OSFatal_t) 0x801AFB10,
+	(DVDConvertPathToEntrynum_t) 0x801CABC0,
+	(DVDFastOpen_t) 0x801CAED0,
+	(DVDReadPrio_t) 0x801CB060,
+	(DVDClose_t) 0x801CAF40,
+	(sprintf_t) 0x802E1D1C,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B9200,
+	(EGG_Heap_Free_t) 0x802B94B0,
+	(void **) 0x80384948,
+	(void **) 0x804370EC
+};
+const loaderFunctionsEx functions_w = {
+	{(OSReport_t) 0x8015FC70,
+	(OSFatal_t) 0x801AFB10,
+	(DVDConvertPathToEntrynum_t) 0x801CABC0,
+	(DVDFastOpen_t) 0x801CAED0,
+	(DVDReadPrio_t) 0x801CB060,
+	(DVDClose_t) 0x801CAF40,
+	(sprintf_t) 0x802E1D1C,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B9200,
+	(EGG_Heap_Free_t) 0x802B94B0,
+	(void **) 0x80382D48,
+	(void **) 0x804354EC
+};
+const loaderFunctionsEx functions_c = {
+	{(OSReport_t) 0x80161A90,
+	(OSFatal_t) 0x801B1930,
+	(DVDConvertPathToEntrynum_t) 0x801CC9E0,
+	(DVDFastOpen_t) 0x801CCCF0,
+	(DVDReadPrio_t) 0x801CCE80,
+	(DVDClose_t) 0x801CCD60,
+	(sprintf_t) 0x802E4DF8,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802BB360,
+	(EGG_Heap_Free_t) 0x802BB610,
+	(void **) 0x8037D4C8,
+	(void **) 0x8042FCCC
+};
 
 void unknownVersion()
 {
@@ -85,30 +134,23 @@ int loadIntoNSMBW()
 {
 	int version = 0, region = 0;
 
-	u16 ident1 = *((u16*)0x80768D52);
-	u16 ident2 = *((u16*)0x80768D92);
-
-	if (ident1 == 0x14)
+	switch (*((u32*)0x800CF6CC))
 	{
-		version = 2;
-		switch (ident2)
-		{
-			case 0x6DA1: region = 'P'; break;
-			case 0x6C61: region = 'E'; break;
-			case 0x6A71: region = 'J'; break;
-			default: unknownVersion();
-		}
-	}
-	else
-	{
-		version = 1;
-		switch (ident1)
-		{
-			case 0x6DE1: region = 'P'; break;
-			case 0x6CA1: region = 'E'; break;
-			case 0x6AB1: region = 'J'; break;
-			default: unknownVersion();
-		}
+		case 0x40820030: region = 'P'; version = 1; break;
+		case 0x40820038: region = 'P'; version = 2; break;
+		case 0x48000465: region = 'E'; version = 1; break;
+		case 0x2C030000: region = 'E'; version = 2; break;
+		case 0x480000B4: region = 'J'; version = 1; break;
+		case 0x4082000C: region = 'J'; version = 2; break;
+		case 0x38A00001:
+			switch (*((u8*)0x8000423A)) {
+				case 0xC8: region = 'K'; break;
+				case 0xAC: region = 'W'; break;
+				default: unknownVersion();
+			}
+			break;
+		case 0x4182000C: region = 'C'; break;
+		default: unknownVersion();
 	}
 
 
@@ -117,13 +159,20 @@ int loadIntoNSMBW()
 	const loaderFunctions *funcs = NULL;
 	switch (region)
 	{
-		case 'P': funcs = &functions_eu.base; break;
-		case 'E': funcs = &functions_us.base; break;
-		case 'J': funcs = &functions_jp.base; break;
+		case 'P': funcs = &functions_p.base; break;
+		case 'E': funcs = &functions_e.base; break;
+		case 'J': funcs = &functions_j.base; break;
+		case 'K': funcs = &functions_k.base; break;
+		case 'W': funcs = &functions_w.base; break;
+		case 'C': funcs = &functions_c.base; break;
 	}
 
 	char path[64];
-	funcs->sprintf(path, "/engine.%c%d.bin", region, version);
+	if (version == 0)
+		funcs->sprintf(path, "/engine.%c.bin", region);
+	else
+		funcs->sprintf(path, "/engine.%c%d.bin", region, version);
+
 	loadKamekBinaryFromDisc(funcs, path);
 
 	return 1;
