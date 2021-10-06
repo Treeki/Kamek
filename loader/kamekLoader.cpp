@@ -130,6 +130,15 @@ kCommandHandler(BranchLink) {
 }
 
 
+inline void cacheInvalidateAddress(u32 address) {
+	register u32 addressRegister = address;
+	asm {
+		dcbst 0, addressRegister
+		sync
+		icbi 0, addressRegister
+	}
+}
+
 
 void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binaryLength)
 {
@@ -155,10 +164,14 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
 	u8 *output = (u8 *)text;
 	
 	// Create text + bss sections
-	for (u32 i = 0; i < header->codeSize; i++)
-		*(output++) = *(input++);
-	for (u32 i = 0; i < header->bssSize; i++)
-		*(output++) = 0;
+	for (u32 i = 0; i < header->codeSize; i++){
+		*output = *(input++);
+		cacheInvalidateAddress((u32)(output++));
+	}
+	for (u32 i = 0; i < header->bssSize; i++){
+		*output = 0;
+		cacheInvalidateAddress((u32)(output++));
+	}
 	
 	while (input < inputEnd) {
 		u32 cmdHeader = *((u32 *)input);
@@ -194,21 +207,16 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
 				funcs->OSReport("Unknown command: %d\n", cmd);
 		}
 		
-		register u32 cacheAddr = address;
-		asm {
-			dcbst r0, cacheAddr
-			sync
-			icbi r0, cacheAddr
-		}
+		cacheInvalidateAddress(address);
 	}
+
+	__sync();
+	__isync();
 
 	typedef void (*Func)(void);
 	for (Func* f = (Func*)(text + header->ctorStart); f < (Func*)(text + header->ctorEnd); f++) {
 		(*f)();
 	}
-
-	__sync();
-	__isync();
 }
 
 
@@ -242,4 +250,3 @@ void loadKamekBinaryFromDisc(const loaderFunctions *funcs, const char *path)
 	funcs->kamekFree(buffer, false, funcs);
 	funcs->OSReport("All done!\n");
 }
-
