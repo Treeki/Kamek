@@ -59,10 +59,10 @@
 //   directly underneath. If exitPoint is not NULL, the function will
 //   branch to exitPoint when done; otherwise, it executes blr as normal
 #define kmBranchDefInt(counter, addr, exitPoint, returnType, ...) \
-	returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__); \
+	static returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__); \
 	kmBranch(addr, kmIdentifier(UserFunc, counter)); \
 	kmPatchExitPoint(kmIdentifier(UserFunc, counter), exitPoint); \
-	returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__)
+	static returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__)
 
 #define kmBranchDefCpp(addr, exitPoint, returnType, ...) \
 	kmBranchDefInt(__COUNTER__, addr, exitPoint, returnType, __VA_ARGS__)
@@ -73,9 +73,9 @@
 //   Set up a branch with link (bl) from a specific instruction to a function
 //   defined directly underneath.
 #define kmCallDefInt(counter, addr, returnType, ...) \
-	returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__); \
+	static returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__); \
 	kmCall(addr, kmIdentifier(UserFunc, counter)); \
-	returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__)
+	static returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__)
 
 #define kmCallDefCpp(addr, returnType, ...) \
 	kmCallDefInt(__COUNTER__, addr, returnType, __VA_ARGS__)
