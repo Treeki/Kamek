@@ -56,6 +56,7 @@ namespace Kamek.Commands
         public abstract string PackForRiivolution();
         public abstract string PackForDolphin();
         public abstract IEnumerable<ulong> PackGeckoCodes();
+        public abstract IEnumerable<ulong> PackActionReplayCodes();
         public abstract bool Apply(KamekFile file);
         public abstract void ApplyToDol(Dol dol);
 

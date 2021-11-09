@@ -68,6 +68,11 @@ namespace Kamek.Commands
             throw new NotImplementedException();
         }
 
+        public override IEnumerable<ulong> PackActionReplayCodes()
+        {
+            throw new NotImplementedException();
+        }
+
         public override void ApplyToDol(Dol dol)
         {
             throw new NotImplementedException();

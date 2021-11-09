@@ -291,6 +291,41 @@ namespace Kamek
             return string.Join("\n", elements);
         }
 
+        public string PackActionReplayCodes()
+        {
+            if (_baseAddress.Type == WordType.RelativeAddr)
+                throw new InvalidOperationException("cannot pack a dynamically linked binary as an Action Replay code");
+
+            var codes = new List<ulong>();
+
+            // add the big patch
+            long paddingSize = 0;
+            if ((_codeBlob.Length % 8) != 0)
+                paddingSize = 8 - (_codeBlob.Length % 8);
+
+            for (int i = 0; i < _codeBlob.Length; i += 4)
+            {
+                ulong bits = 0x04000000UL << 32;
+                bits |= (ulong)((_baseAddress.Value + i) & 0x1FFFFFF) << 32;
+                if (i < _codeBlob.Length) bits |= (ulong)_codeBlob[i] << 24;
+                if ((i + 1) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 1] << 16;
+                if ((i + 2) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 2] << 8;
+                if ((i + 3) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 3];
+                codes.Add(bits);
+            }
+
+            // add individual patches
+            foreach (var pair in _commands)
+                codes.AddRange(pair.Value.PackActionReplayCodes());
+
+            // convert everything
+            var elements = new string[codes.Count];
+            for (int i = 0; i < codes.Count; i++)
+                elements[i] = string.Format("{0:X8} {1:X8}", codes[i] >> 32, codes[i] & 0xFFFFFFFF);
+
+            return string.Join("\n", elements);
+        }
+
         public void InjectIntoDol(Dol dol)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
