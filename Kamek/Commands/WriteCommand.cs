@@ -109,7 +109,7 @@ namespace Kamek.Commands
 
         public override string PackForDolphin()
         {
-            Address.AssertAbsolute();
+            Address.Value.AssertAbsolute();
             if (ValueType == Type.Pointer)
                 Value.AssertAbsolute();
             else
