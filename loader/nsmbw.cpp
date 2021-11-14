@@ -86,6 +86,7 @@ int loadIntoNSMBW()
 	int version = 0, region = 0;
 
 	switch (*((u32*)0x800CF6CC))
+	{
 		case 0x40820030: region = 'P'; version = 1; break;
 		case 0x40820038: region = 'P'; version = 2; break;
 		case 0x48000465: region = 'E'; version = 1; break;
