@@ -28,7 +28,7 @@ void freeAdapter(void *buffer, bool isForCode, const loaderFunctions *funcs) {
 }
 
 
-const loaderFunctionsEx functions_eu = {
+const loaderFunctionsEx functions_p = {
 	{(OSReport_t) 0x8015F870,
 	(OSFatal_t) 0x801AF710,
 	(DVDConvertPathToEntrynum_t) 0x801CA7C0,
@@ -43,7 +43,7 @@ const loaderFunctionsEx functions_eu = {
 	(void **) 0x80377F48,
 	(void **) 0x8042A72C
 };
-const loaderFunctionsEx functions_us = {
+const loaderFunctionsEx functions_e = {
 	{(OSReport_t) 0x8015F730,
 	(OSFatal_t) 0x801AF5D0,
 	(DVDConvertPathToEntrynum_t) 0x801CA680,
@@ -58,7 +58,7 @@ const loaderFunctionsEx functions_us = {
 	(void **) 0x80377C48,
 	(void **) 0x8042A44C
 };
-const loaderFunctionsEx functions_jp = {
+const loaderFunctionsEx functions_j = {
 	{(OSReport_t) 0x8015F540,
 	(OSFatal_t) 0x801AF3E0,
 	(DVDConvertPathToEntrynum_t) 0x801CA490,
@@ -117,9 +117,9 @@ int loadIntoNSMBW()
 	const loaderFunctions *funcs = NULL;
 	switch (region)
 	{
-		case 'P': funcs = &functions_eu.base; break;
-		case 'E': funcs = &functions_us.base; break;
-		case 'J': funcs = &functions_jp.base; break;
+		case 'P': funcs = &functions_p.base; break;
+		case 'E': funcs = &functions_e.base; break;
+		case 'J': funcs = &functions_j.base; break;
 	}
 
 	char path[64];
