@@ -4,6 +4,8 @@ int loadIntoNSMBW();
 kmCondWritePointer(0x80328478, 0x8015BC60, loadIntoNSMBW); // EU
 kmCondWritePointer(0x80328130, 0x8015BB20, loadIntoNSMBW); // US
 kmCondWritePointer(0x80327E98, 0x8015B930, loadIntoNSMBW); // JP
+kmCondWritePointer(0x80334E60, 0x8015C060, loadIntoNSMBW); // KR
+kmCondWritePointer(0x80333218, 0x8015C060, loadIntoNSMBW); // TW
 
 typedef void *(*EGG_Heap_Alloc_t) (u32 size, s32 align, void *heap);
 typedef void (*EGG_Heap_Free_t) (void *buffer, void *heap);
@@ -73,6 +75,36 @@ const loaderFunctionsEx functions_j = {
 	(void **) 0x803779C8,
 	(void **) 0x8042A16C
 };
+const loaderFunctionsEx functions_k = {
+	{(OSReport_t) 0x8015FC70,
+	(OSFatal_t) 0x801AFB10,
+	(DVDConvertPathToEntrynum_t) 0x801CABC0,
+	(DVDFastOpen_t) 0x801CAED0,
+	(DVDReadPrio_t) 0x801CB060,
+	(DVDClose_t) 0x801CAF40,
+	(sprintf_t) 0x802E1D1C,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B9200,
+	(EGG_Heap_Free_t) 0x802B94B0,
+	(void **) 0x80384948,
+	(void **) 0x804370EC
+};
+const loaderFunctionsEx functions_w = {
+	{(OSReport_t) 0x8015FC70,
+	(OSFatal_t) 0x801AFB10,
+	(DVDConvertPathToEntrynum_t) 0x801CABC0,
+	(DVDFastOpen_t) 0x801CAED0,
+	(DVDReadPrio_t) 0x801CB060,
+	(DVDClose_t) 0x801CAF40,
+	(sprintf_t) 0x802E1D1C,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802B9200,
+	(EGG_Heap_Free_t) 0x802B94B0,
+	(void **) 0x80382D48,
+	(void **) 0x804354EC
+};
 
 void unknownVersion()
 {
@@ -93,6 +125,14 @@ int loadIntoNSMBW()
 		case 0x2C030000: region = 'E'; version = 2; break;
 		case 0x480000B4: region = 'J'; version = 1; break;
 		case 0x4082000C: region = 'J'; version = 2; break;
+		case 0x38A00001:
+			switch (*((u8*)0x8000423A))
+			{
+				case 0xC8: region = 'K'; break;
+				case 0xAC: region = 'W'; break;
+				default: unknownVersion();
+			}
+			break;
 		default: unknownVersion();
 	}
 
@@ -105,10 +145,15 @@ int loadIntoNSMBW()
 		case 'P': funcs = &functions_p.base; break;
 		case 'E': funcs = &functions_e.base; break;
 		case 'J': funcs = &functions_j.base; break;
+		case 'K': funcs = &functions_k.base; break;
+		case 'W': funcs = &functions_w.base; break;
 	}
 
 	char path[64];
-	funcs->sprintf(path, "/engine.%c%d.bin", region, version);
+	if (version == 0)
+		funcs->sprintf(path, "/engine.%c.bin", region);
+	else
+		funcs->sprintf(path, "/engine.%c%d.bin", region, version);
 	loadKamekBinaryFromDisc(funcs, path);
 
 	return 1;
