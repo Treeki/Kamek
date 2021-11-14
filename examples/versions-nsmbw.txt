@@ -1,90 +1,237 @@
+# NSMBW address maps
+# Originally by Ninji, rewritten by RoadrunnerWMC in 2021
+# ------------------
+# Conventions:
+# - For this file format in general, address ranges are inclusive on
+#   both ends.
+# - Some existing tools consider unmapped ranges to be implicitly +0x0,
+#   but mine are a bit stricter and consider unmapped ranges to be
+#   non-portable, so +0x0 ranges are provided explicitly in this map.
+# - When a function symbol should be preserved across versions, but the
+#   actual code at the start of the function is completely different, I
+#   map the first byte of the first instruction and nothing else. If the
+#   corresponding instruction does show up later, I map the remaining
+#   three bytes to it. So if you want to map instructions rather than
+#   symbols, you'll be slightly more accurate if you add 1 to the
+#   address before mapping it, and then subtract 1 after. This only
+#   happens in a handful of places, though.
+
+
 [P1]
-# Original: EU v1
-[P2]
-# Mapped: EU v2
-800CF6E8-800CF90F: +0x8
-807685A0-807AAA70: +0x40
-807AAA74-809907FF: +0x10
-80990800-*: +0x20
+# Base version: International NSMBW v1 (SMNP01 rev 1)
 
 [E1]
-# Mapped: US v1
+# North American NSMBW v1 (SMNE01 rev 1)
 # .text section
-800B4604-800C8E4C: -0x50
-800C8E50-800E4D70: -0xF0
-800E4EC0-8010F200: -0x110
-8010F430-802BB6BC: -0x140
-802BB6C0-802BB74C: -0x150
-802BB860-802BBBFC: -0x260
-802BBC90-802EDCC0: -0x2F0
-# .ctors, .dtors, .rodata, part of .data section
-802EDCE0-80317734: -0x300
-# .data section
-80317750-80322FE0: -0x318
-80323118-8032E77C: -0x348
-8032E780-8035197C: -0x340
-# .sdata section, part of .sbss
-80351980-80427E87: -0x300
-# .sbss, .sdata2, .sbss2 sections
-80427E88-80429563: -0x310
-80429564-80429D7F: -0x2F8
-80429D80-807684BF: -0x2E0
-# part of d_basesNP, d_enemiesNP, d_en_bossNP
-8098A43C-*: +0x20
-
-[E2]
-# Mapped: US v2
-extend E1
-800CF5F8-800CF81F: +0x8
-807685A0-807AAA70: +0x40
-807AAA74-8099081C: +0x10
-80990820-*: +0x20
+extend P1
+80000000-800b4600: +0x0
+800b4630-800b463f: -0x20
+800b4650-800b466b: -0x1c
+800b4670-800b46bb: -0x20
+800b46cc-800b46fb: -0x30
+800b4724-800b475f: -0x58
+800b4760-800c8daf: -0x50
+800c8e50-800e4c5f: -0xf0
+800e4c60-800e4c63: -0xe8
+800e4c64-800e4c6b: -0xf4
+800e4c6c-800e4d6f: -0xf0
+800e4d94-800e4d9b: -0x114
+800e4da0-800e4ebf: -0x114
+800e4ec0-8010f203: -0x110
+8010f234-8010f237: -0x134
+8010f238-8010f243: -0x144
+8010f244-802bb6bf: -0x140
+802bb6d0-802bb74f: -0x150
+802bb860-802bbbff: -0x260
+802bbc90-802edccf: -0x2f0
+802edce0-80317737: -0x300
+80317750-80322ffb: -0x318
+80323000-8032301b: -0x31c
+80323020-8032307b: -0x320
+80323080-803230cf: -0x324
+803230e8-803230ff: -0x33c
+8032310c-8032e77f: -0x348
+8032e780-8035197f: -0x340
+80351980-80429563: -0x300
+80429564-80429d7f: -0x2f8
+80429d80-806dffff: -0x2e0
+806e0000-8098a43b: +0x0
+8098a43c-8098a473: +0x24
+8098a478-*: +0x20
 
 [J1]
-# Mapped: JP v1
-# .text section
-800B4604-800B475C: -0x50
-800B4760-800C8DAC: -0xD0
-800C8E50-800E4D6C: -0x170
-800E4D94-800E4EB4: -0x194
-800E4EB8-8010F1D0: -0x190
-8010F430-802BB6BC: -0x330
-802BB6D0-802BB74C: -0x340
-802BB860-802BBBFC: -0x450
-802BBC90-802EDCC0: -0x4E0
-# .ctors, .dtors, .rodata, part of .data section
-802EDCE0-80317734: -0x4E0
-# .data section
-80317750-80322FDC: -0x4F8
-80323118-8035197C: -0x5E0
-# .sdata, part of .sbss section
-80351980-80427E5F: -0x580
-80427E88-8042954B: -0x5A8
-80429570-80429D7F: -0x5C8
-# part of .sdata2, .sbss2 section
-# end offset is right before d_profileNP header
-80429D80-807684BF: -0x5C0
-# d_profileNP and d_basesNP
-# "no change" gap ends at 8779ABC
-80779C70-8078891F: -0x130
-80788AD0-80789EEF: -0x260
-80789F00-808D3B87: -0x270
-808D3BD4-808D3C1F: -0x2B4
-808D3C20-80940C47: -0x2C0
-80940F58-80943167: -0x4E8
-809431F8-8094329F: -0x4F8
-809432C0-80944E77: -0x500
+# Japanese NSMBW v1 (SMNJ01 rev 1)
+extend P1
+80000000-800b4600: +0x0
+800b4630-800b4630: -0x20
+800b4660-800b466b: -0x4c
+800b4670-800b46ab: -0x50
+800b4734-800b475f: -0xd8
+800b4760-800c8daf: -0xd0
+800c8e50-800e4c5f: -0x170
+800e4c60-800e4c63: -0x168
+800e4c64-800e4c6b: -0x174
+800e4c6c-800e4d6f: -0x170
+800e4d94-800e4d9b: -0x194
+800e4da0-800e4ebf: -0x194
+800e4ec0-8010f1df: -0x190
+8010f1ec-8010f203: -0x19c
+8010f234-8010f237: -0x1bc
+8010f238-8010f23b: -0x1c8
+8010f23c-8010f23f: -0x1d0
+8010f240-8010f243: -0x1cc
+8010f244-8010f257: -0x1c8
+8010f32c-8010f32f: -0x29c
+8010f330-8010f333: -0x298
+8010f338-8010f33f: -0x29c
+8010f340-8010f347: -0x298
+8010f378-8010f387: -0x2c8
+8010f3ec-8010f417: -0x32c
+8010f41c-802bb6bf: -0x330
+802bb6d0-802bb74f: -0x340
+802bb860-802bbbff: -0x450
+802bbc90-80317737: -0x4e0
+80317750-80322ff7: -0x4f8
+803230a0-803230c3: -0x5a0
+80323118-8035197f: -0x5e0
+80351980-80427e5f: -0x580
+80427e88-8042954b: -0x5a8
+80429560-80429563: -0x5bc
+80429570-80429d7f: -0x5c8
+80429d80-806dffff: -0x5c0
+806e0000-80779abf: +0x0
+80779b78-80779b7f: -0xb8
+80779b84-80779b93: -0xb8
+80779bbc-80779bcb: -0xe0
+80779c1c-8078891f: -0x130
+807889d8-807889df: -0x1e8
+807889e4-807889f3: -0x1e8
+80788a1c-80788a2b: -0x210
+80788a7c-80789eef: -0x260
+80789f00-808d3b87: -0x270
+808d3bd4-808d3bd7: -0x2b4
+808d3bd8-808d3bdb: -0x2bc
+808d3bdc-808d3be3: -0x2b8
+808d3be4-808d3be7: -0x2ac
+808d3be8-808d3beb: -0x2b4
+808d3bec-808d3bef: -0x2bc
+808d3bf0-808d3bf3: -0x2c4
+808d3bf4-808d3c17: -0x2b8
+808d3c20-80940cb3: -0x2c0
+80940ea0-80940ed3: -0x4ac
+80940ed8-80940f07: -0x4b0
+80940f58-80943187: -0x4e8
+8094318c-809431ab: -0x4ec
+809431b0-809431cf: -0x4f0
+809431d4-809431f3: -0x4f4
+809431f8-809432b7: -0x4f8
+809432c0-80944e93: -0x500
+80944e98-80944eb3: -0x504
+80944ec0-80944edb: -0x510
+80944ee0-80944eeb: -0x514
+809450ac-809450c3: -0x6d4
+809450c8-809450f3: -0x6d8
 80945144-80945153: -0x714
-80945158-8098A36B: -0x718
-8098A478-8098FF18: -0x6F8
-# d_enemiesNP
-# this offset starts at the .rel header
+80945158-8098a43b: -0x718
+8098a43c-8098a473: -0x6f4
+8098a478-809907f7: -0x6f8
 80990800-*: -0x700
 
+[P2]
+# International NSMBW v2 (SMNP01 rev 2)
+extend P1
+80000000-800cf29f: +0x0
+800cf2a0-800cf2a3: +0x4
+800cf2a4-800cf303: +0x8
+800cf304-800cf307: +0xc
+800cf308-800cf30f: +0x18
+800cf320-800cf327: -0x8
+800cf328-800cf6e7: +0x0
+800cf6e8-800cf6eb: +0x4
+800cf6ec-800cf73b: +0x8
+800cf73c-800cf73f: +0xc
+800cf740-800cf7e7: +0x10
+800cf7e8-800cf7eb: +0x14
+800cf7ec-800cf7f3: +0x20
+800cf804-800cf80b: +0x0
+800cf80c-800cf907: +0x8
+800cf910-800e0d2b: +0x0
+800e0d30-800e0d3f: -0x4
+800e0d44-800e0d4b: -0x8
+800e0d4c-800e0ddb: +0x10
+800e0de4-800e0df7: +0x8
+800e0dfc-800e0e0b: +0x4
+800e0e10-807683f6: +0x0
+807683f7-8076842b: +0xf
+8076842c-80768462: +0x1e
+80768463-8076849b: +0x2d
+8076849c-8076849f: +0x3c
+807684a0-807aaa30: +0x40
+807aaa6c-809907ff: +0x10
+80990800-*: +0x20
+
+[E2]
+# North American NSMBW v2 (SMNE01 rev 2)
+extend E1
+80000000-800cf1af: +0x0
+800cf1b0-800cf1b3: +0x4
+800cf1b4-800cf213: +0x8
+800cf214-800cf217: +0xc
+800cf218-800cf21f: +0x18
+800cf230-800cf237: -0x8
+800cf238-800cf5f7: +0x0
+800cf5f8-800cf5fb: +0x4
+800cf5fc-800cf64b: +0x8
+800cf64c-800cf64f: +0xc
+800cf650-800cf6f7: +0x10
+800cf6f8-800cf6fb: +0x14
+800cf6fc-800cf703: +0x20
+800cf714-800cf71b: +0x0
+800cf71c-800cf817: +0x8
+800cf820-800e0c3b: +0x0
+800e0c40-800e0c4f: -0x4
+800e0c54-800e0c5b: -0x8
+800e0c5c-800e0ceb: +0x10
+800e0cf4-800e0d07: +0x8
+800e0d0c-800e0d1b: +0x4
+800e0d20-807683f6: +0x0
+807683f7-8076842b: +0xf
+8076842c-80768462: +0x1e
+80768463-8076849b: +0x2d
+8076849c-8076849f: +0x3c
+807684a0-807aaa30: +0x40
+807aaa6c-8099081f: +0x10
+80990820-*: +0x20
+
 [J2]
-# Mapped: JP v2
+# Japanese NSMBW v2 (SMNJ01 rev 2)
 extend J1
-800CF578-800CF79F: +0x8
-807685A0-807AA7FF: +0x40
-807AA800-809900FF: +0x10
+80000000-800cf12f: +0x0
+800cf130-800cf133: +0x4
+800cf134-800cf193: +0x8
+800cf194-800cf197: +0xc
+800cf198-800cf19f: +0x18
+800cf1b0-800cf1b7: -0x8
+800cf1b8-800cf577: +0x0
+800cf578-800cf57b: +0x4
+800cf57c-800cf5cb: +0x8
+800cf5cc-800cf5cf: +0xc
+800cf5d0-800cf677: +0x10
+800cf678-800cf67b: +0x14
+800cf67c-800cf683: +0x20
+800cf694-800cf69b: +0x0
+800cf69c-800cf797: +0x8
+800cf7a0-800e0bbb: +0x0
+800e0bc0-800e0bcf: -0x4
+800e0bd4-800e0bdb: -0x8
+800e0bdc-800e0c6b: +0x10
+800e0c74-800e0c87: +0x8
+800e0c8c-800e0c9b: +0x4
+800e0ca0-807683f6: +0x0
+807683f7-8076842b: +0xf
+8076842c-80768462: +0x1e
+80768463-8076849b: +0x2d
+8076849c-8076849f: +0x3c
+807684a0-807aa7c0: +0x40
+807aa7fc-809900ff: +0x10
 80990100-*: +0x20
