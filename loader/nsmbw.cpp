@@ -28,7 +28,7 @@ void freeAdapter(void *buffer, bool isForCode, const loaderFunctions *funcs) {
 }
 
 
-const loaderFunctionsEx functions_eu = {
+const loaderFunctionsEx functions_p = {
 	{(OSReport_t) 0x8015F870,
 	(OSFatal_t) 0x801AF710,
 	(DVDConvertPathToEntrynum_t) 0x801CA7C0,
@@ -43,7 +43,7 @@ const loaderFunctionsEx functions_eu = {
 	(void **) 0x80377F48,
 	(void **) 0x8042A72C
 };
-const loaderFunctionsEx functions_us = {
+const loaderFunctionsEx functions_e = {
 	{(OSReport_t) 0x8015F730,
 	(OSFatal_t) 0x801AF5D0,
 	(DVDConvertPathToEntrynum_t) 0x801CA680,
@@ -58,7 +58,7 @@ const loaderFunctionsEx functions_us = {
 	(void **) 0x80377C48,
 	(void **) 0x8042A44C
 };
-const loaderFunctionsEx functions_jp = {
+const loaderFunctionsEx functions_j = {
 	{(OSReport_t) 0x8015F540,
 	(OSFatal_t) 0x801AF3E0,
 	(DVDConvertPathToEntrynum_t) 0x801CA490,
@@ -85,30 +85,14 @@ int loadIntoNSMBW()
 {
 	int version = 0, region = 0;
 
-	u16 ident1 = *((u16*)0x80768D52);
-	u16 ident2 = *((u16*)0x80768D92);
-
-	if (ident1 == 0x14)
-	{
-		version = 2;
-		switch (ident2)
-		{
-			case 0x6DA1: region = 'P'; break;
-			case 0x6C61: region = 'E'; break;
-			case 0x6A71: region = 'J'; break;
-			default: unknownVersion();
-		}
-	}
-	else
-	{
-		version = 1;
-		switch (ident1)
-		{
-			case 0x6DE1: region = 'P'; break;
-			case 0x6CA1: region = 'E'; break;
-			case 0x6AB1: region = 'J'; break;
-			default: unknownVersion();
-		}
+	switch (*((u32*)0x800CF6CC))
+		case 0x40820030: region = 'P'; version = 1; break;
+		case 0x40820038: region = 'P'; version = 2; break;
+		case 0x48000465: region = 'E'; version = 1; break;
+		case 0x2C030000: region = 'E'; version = 2; break;
+		case 0x480000B4: region = 'J'; version = 1; break;
+		case 0x4082000C: region = 'J'; version = 2; break;
+		default: unknownVersion();
 	}
 
 
@@ -117,9 +101,9 @@ int loadIntoNSMBW()
 	const loaderFunctions *funcs = NULL;
 	switch (region)
 	{
-		case 'P': funcs = &functions_eu.base; break;
-		case 'E': funcs = &functions_us.base; break;
-		case 'J': funcs = &functions_jp.base; break;
+		case 'P': funcs = &functions_p.base; break;
+		case 'E': funcs = &functions_e.base; break;
+		case 'J': funcs = &functions_j.base; break;
 	}
 
 	char path[64];
