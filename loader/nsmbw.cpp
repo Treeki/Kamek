@@ -85,30 +85,14 @@ int loadIntoNSMBW()
 {
 	int version = 0, region = 0;
 
-	u16 ident1 = *((u16*)0x80768D52);
-	u16 ident2 = *((u16*)0x80768D92);
-
-	if (ident1 == 0x14)
-	{
-		version = 2;
-		switch (ident2)
-		{
-			case 0x6DA1: region = 'P'; break;
-			case 0x6C61: region = 'E'; break;
-			case 0x6A71: region = 'J'; break;
-			default: unknownVersion();
-		}
-	}
-	else
-	{
-		version = 1;
-		switch (ident1)
-		{
-			case 0x6DE1: region = 'P'; break;
-			case 0x6CA1: region = 'E'; break;
-			case 0x6AB1: region = 'J'; break;
-			default: unknownVersion();
-		}
+	switch (*((u32*)0x800CF6CC))
+		case 0x40820030: region = 'P'; version = 1; break;
+		case 0x40820038: region = 'P'; version = 2; break;
+		case 0x48000465: region = 'E'; version = 1; break;
+		case 0x2C030000: region = 'E'; version = 2; break;
+		case 0x480000B4: region = 'J'; version = 1; break;
+		case 0x4082000C: region = 'J'; version = 2; break;
+		default: unknownVersion();
 	}
 
 
