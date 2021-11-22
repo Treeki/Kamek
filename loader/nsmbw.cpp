@@ -151,9 +151,9 @@ int loadIntoNSMBW()
 
 	char path[64];
 	if (version == 0)
-		funcs->sprintf(path, "/engine.%c.bin", region);
+		funcs->sprintf(path, "/Code/%c.bin", region);
 	else
-		funcs->sprintf(path, "/engine.%c%d.bin", region, version);
+		funcs->sprintf(path, "/Code/%c%d.bin", region, version);
 	loadKamekBinaryFromDisc(funcs, path);
 
 	return 1;
