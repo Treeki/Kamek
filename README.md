@@ -10,21 +10,15 @@ Kamek is an engine for injecting custom code into Wii games - it's designed for
  for the [*Newer Super Mario Bros. Wii* project][newer]. It cannot build Newer
  in its current form, but this may be possible later.)
 
-### TODO
-
-- Port some of the Newer hacks to this
-
-- More testing
-
 ### Requirements
 
 To build and run the Kamek linker:
 
-- .NET Framework 4.5 *(Mono support for non-Windows OSes is a definite goal,
-  may not be functional just yet)*
+- .NET 6.0 or newer
 
 To compile code:
 
+- [Unicorn Engine][unicorn] 2.0 or newer (to use Kamek's built-in emulation), a Windows system, or WINE
 - NXP ['CodeWarrior Special Edition'][cw] for MPC55xx/MPC56xx v2.10
   - If this direct link doesn't work, the original page is
     ['available on the Internet Archive'][cwIA].
@@ -42,5 +36,6 @@ Support for other compilers such as GCC and Clang is not planned.
 
 [cw]: http://cache.nxp.com/lgfiles/devsuites/PowerPC/CW55xx_v2_10_SE.exe?WT_TYPE=IDE%20-%20Debug,%20Compile%20and%20Build%20Tools&WT_VENDOR=FREESCALE&WT_FILE_FORMAT=exe&WT_ASSET=Downloads&fileExt=.exe
 [cwIA]: http://web.archive.org/web/20160602205749/http://www.nxp.com/products/software-and-tools/software-development-tools/codewarrior-development-tools/downloads/special-edition-software:CW_SPECIALEDITIONS
+[unicorn]: https://github.com/unicorn-engine/unicorn
 [newer]: https://github.com/Treeki/NewerSMBW
 

@@ -35,17 +35,35 @@ namespace Kamek
             {
                 // Execute the compiler
                 var mwccPath = FindCompiler();
-                if (mwccPath != null)
-                {
-                    var compiler = new Emulator.CompilerRunner();
-                    compiler.LoadExecutable(mwccPath);
-                    compiler.LoadStdLib(args.Skip(1));
-                    compiler.Emulate();
-                }
-                else
+                if (mwccPath == null)
                 {
                     Console.WriteLine("Unable to find compiler - please place 'mwcceppc.exe' into the same directory as Kamek, or set the KAMEK_MWCC environment variable to its path.");
+                    return;
                 }
+
+                uint unicornVersion = 0;
+                try
+                {
+                    unicornVersion = Emulator.Unicorn.GetVersion(out uint major, out uint minor);
+                }
+                catch (DllNotFoundException ex)
+                {
+                    Console.WriteLine("Unable to load Unicorn Engine library - make sure that 2.0 is installed and available");
+                    Console.WriteLine();
+                    Console.WriteLine(ex);
+                    return;
+                }
+
+                if (unicornVersion < 0x200)
+                {
+                    Console.WriteLine("Unicorn Engine 1.x is not supported");
+                    return;
+                }
+
+                var compiler = new Emulator.CompilerRunner();
+                compiler.LoadExecutable(mwccPath);
+                compiler.LoadStdLib(args.Skip(1));
+                compiler.Emulate();
                 return;
             }
 

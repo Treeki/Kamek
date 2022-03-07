@@ -148,8 +148,8 @@ namespace Kamek.Emulator {
 			All = 7
 		}
 
-		[DllImport("unicorn")]
-		static extern uint uc_version(out uint major, out uint minor);
+		[DllImport("unicorn", EntryPoint = "uc_version")]
+		public static extern uint GetVersion(out uint major, out uint minor);
 
 		[DllImport("unicorn")]
 		static extern Error uc_open(Arch arch, Mode mode, out IntPtr uc);
