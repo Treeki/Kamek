@@ -10,10 +10,44 @@ namespace Kamek
 {
     class Program
     {
+        static string FindCompiler()
+        {
+            if (File.Exists("mwcceppc.exe"))
+                return "mwcceppc.exe";
+
+            var processDirExe = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "mwcceppc.exe");
+            if (File.Exists(processDirExe))
+                return processDirExe;
+
+            var envVar = Environment.GetEnvironmentVariable("KAMEK_MWCC");
+            if (envVar != null && File.Exists(envVar))
+                return envVar;
+
+            return null;
+        }
+
         static void Main(string[] args)
         {
             Console.WriteLine("Kamek 2.0 by Ninji/Ash Wolf - https://github.com/Treeki/Kamek");
             Console.WriteLine();
+
+            if (args.Length > 0 && args[0] == "-c")
+            {
+                // Execute the compiler
+                var mwccPath = FindCompiler();
+                if (mwccPath != null)
+                {
+                    var compiler = new Emulator.CompilerRunner();
+                    compiler.LoadExecutable(mwccPath);
+                    compiler.LoadStdLib(args.Skip(1));
+                    compiler.Emulate();
+                }
+                else
+                {
+                    Console.WriteLine("Unable to find compiler - please place 'mwcceppc.exe' into the same directory as Kamek, or set the KAMEK_MWCC environment variable to its path.");
+                }
+                return;
+            }
 
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
@@ -186,9 +220,15 @@ namespace Kamek
         private static void ShowHelp()
         {
             Console.WriteLine("Syntax:");
+            Console.WriteLine("  Kamek -c [compiler options]");
             Console.WriteLine("  Kamek file1.o [file2.o...] [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
+            Console.WriteLine("  Compiler Executor:");
+            Console.WriteLine("    -c [compiler options]");
+            Console.WriteLine("      emulates the CodeWarrior compiler, if 'mwcceppc.exe' is available");
+            Console.WriteLine("      (all other Kamek functionality is disabled when -c is provided)");
+            Console.WriteLine();
             Console.WriteLine("  Build Mode (select one; defaults to -dynamic):");
             Console.WriteLine("    -dynamic");
             Console.WriteLine("      generate a dynamically linked Kamek binary for use with the loader");
