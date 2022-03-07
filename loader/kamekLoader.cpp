@@ -1,5 +1,9 @@
 #include "kamekLoader.h"
 
+#define KM_FILE_VERSION 2
+#define STRINGIFY_(x) #x
+#define STRINGIFY(x) STRINGIFY_(x)
+
 struct KBHeader {
 	u32 magic1;
 	u16 magic2;
@@ -145,9 +149,11 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
 	const KBHeader *header = (const KBHeader *)binary;
 	if (header->magic1 != 'Kame' || header->magic2 != 'k\0')
 		kamekError(funcs, "FATAL ERROR: Corrupted file, please check your game's Kamek files");
-	if (header->version != 2) {
+	if (header->version != KM_FILE_VERSION) {
 		char err[512];
-		funcs->sprintf(err, "FATAL ERROR: Incompatible file (version %d), please upgrade your Kamek Loader", header->version);
+		funcs->sprintf(err, "FATAL ERROR: Incompatible file (version %d, expected " STRINGIFY(KM_FILE_VERSION) ");\nplease upgrade your Kamek %s",
+			header->version,
+			((header->version > KM_FILE_VERSION) ? "Loader" : "file"));
 		kamekError(funcs, err);
 	}
 	
