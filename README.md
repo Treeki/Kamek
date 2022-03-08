@@ -20,8 +20,7 @@ Kamek is an engine for injecting custom code into Wii games - it's designed for
 
 To build and run the Kamek linker:
 
-- .NET Framework 4.5 *(Mono support for non-Windows OSes is a definite goal,
-  may not be functional just yet)*
+- .NET Framework 6.0 (installable on both Windows and non-Windows OSes)
 
 To compile code:
 
