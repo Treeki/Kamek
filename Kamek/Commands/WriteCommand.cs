@@ -152,18 +152,53 @@ namespace Kamek.Commands
                 else
                     Original.Value.AssertValue();
 
-                ulong if_start = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | Original.Value.Value;
-                switch (ValueType)
+                if (ValueType == Type.Value8)
                 {
-                    case Type.Value8: throw new NotImplementedException("gecko does not support 8-bit conditional writes");
-                    case Type.Value16: if_start |= 0x28000000UL << 32; break;
-                    case Type.Value32:
-                    case Type.Pointer: if_start |= 0x20000000UL << 32; break;
+                    // Gecko doesn't natively support conditional 8-bit writes,
+                    // so we have to implement it manually with a code embedding PPC...
+
+                    uint addrTop = (uint)(Address.Value.Value >> 16);
+                    uint addrBtm = (uint)(Address.Value.Value & 0xFFFF);
+                    uint orig = (uint)Original.Value.Value;
+                    uint value = (uint)Value.Value;
+
+                    // r0 and r3 empirically *seem* to be available, though there's zero documentation on this
+                    // r4 is definitely NOT available (codehandler dies if you mess with it)
+                    uint inst1 = 0x3C600000 | addrTop;  // lis r3, X
+                    uint inst2 = 0x60630000 | addrBtm;  // ori r3, r3, X
+                    uint inst3 = 0x88030000;            // lbz r0, 0(r3)
+                    uint inst4 = 0x2C000000 | orig;     // cmpwi r0, X
+                    uint inst5 = 0x4082000C;            // bne @end
+                    uint inst6 = 0x38000000 | value;    // li r0, X
+                    uint inst7 = 0x98030000;            // stb r0, 0(r3)
+                    uint inst8 = 0x4E800020;            // @end: blr
+
+                    return new ulong[5] {
+                        (0xC0000000UL << 32) | 4,  // "4" for four lines of instruction data below
+                        ((ulong)inst1 << 32) | inst2,
+                        ((ulong)inst3 << 32) | inst4,
+                        ((ulong)inst5 << 32) | inst6,
+                        ((ulong)inst7 << 32) | inst8
+                    };
+                }
+                else
+                {
+                    // Sandwich the write between "if" and "endif" codes
+
+                    ulong if_start = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | Original.Value.Value;
+
+                    switch (ValueType)
+                    {
+                        case Type.Value16: if_start |= 0x28000000UL << 32; break;
+                        case Type.Value32:
+                        case Type.Pointer: if_start |= 0x20000000UL << 32; break;
+                    }
+
+                    ulong if_end = 0xE2000001UL << 32;
+
+                    return new ulong[3] { if_start, code, if_end };
                 }
 
-                ulong if_end = 0xE2000001UL << 32;
-
-                return new ulong[3] { if_start, code, if_end };
             }
             else
             {
