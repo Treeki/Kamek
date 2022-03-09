@@ -171,6 +171,49 @@ namespace Kamek.Commands
             }
         }
 
+        public override IEnumerable<ulong> PackActionReplayCodes()
+        {
+            Address.Value.AssertAbsolute();
+            if (ValueType == Type.Pointer)
+                Value.AssertAbsolute();
+            else
+                Value.AssertValue();
+
+            if (Address.Value.Value >= 0x90000000)
+                throw new NotImplementedException("MEM2 writes not yet supported for action replay");
+
+            ulong code = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | Value.Value;
+            switch (ValueType)
+            {
+                case Type.Value16: code |= 0x2000000UL << 32; break;
+                case Type.Value32:
+                case Type.Pointer: code |= 0x4000000UL << 32; break;
+            }
+
+            if (Original.HasValue)
+            {
+                if (ValueType == Type.Pointer)
+                    Original.Value.AssertAbsolute();
+                else
+                    Original.Value.AssertValue();
+
+                ulong if_start = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | Original.Value.Value;
+                switch (ValueType)
+                {
+                    case Type.Value8:  if_start |= 0x08000000UL << 32; break;
+                    case Type.Value16: if_start |= 0x0A000000UL << 32; break;
+                    case Type.Value32:
+                    case Type.Pointer: if_start |= 0x0C000000UL << 32; break;
+                }
+
+                return new ulong[2] { if_start, code };
+            }
+            else
+            {
+                return new ulong[1] { code };
+            }
+        }
+
         public override void ApplyToDol(Dol dol)
         {
             Address.Value.AssertAbsolute();

@@ -50,6 +50,17 @@ namespace Kamek.Commands
             return new ulong[1] { code };
         }
 
+        public override IEnumerable<ulong> PackActionReplayCodes()
+        {
+            Address.Value.AssertAbsolute();
+            Target.AssertAbsolute();
+
+            ulong code = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | GenerateInstruction();
+            code |= 0x4000000UL << 32;
+
+            return new ulong[1] { code };
+        }
+
         public override bool Apply(KamekFile file)
         {
             if (Address.Value.IsAbsolute && Target.IsAbsolute && file.Contains(Address.Value))
