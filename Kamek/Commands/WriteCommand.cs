@@ -134,8 +134,6 @@ namespace Kamek.Commands
             else
                 Value.AssertValue();
 
-            if (Original.HasValue)
-                throw new NotImplementedException("conditional writes not yet supported for gecko");
             if (Address.Value.Value >= 0x90000000)
                 throw new NotImplementedException("MEM2 writes not yet supported for gecko");
 
@@ -147,7 +145,30 @@ namespace Kamek.Commands
                 case Type.Pointer: code |= 0x4000000UL << 32; break;
             }
 
-            return new ulong[1] { code };
+            if (Original.HasValue)
+            {
+                if (ValueType == Type.Pointer)
+                    Original.Value.AssertAbsolute();
+                else
+                    Original.Value.AssertValue();
+
+                ulong if_start = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | Original.Value.Value;
+                switch (ValueType)
+                {
+                    case Type.Value8: throw new NotImplementedException("gecko does not support 8-bit conditional writes");
+                    case Type.Value16: if_start |= 0x28000000UL << 32; break;
+                    case Type.Value32:
+                    case Type.Pointer: if_start |= 0x20000000UL << 32; break;
+                }
+
+                ulong if_end = 0xE2000001UL << 32;
+
+                return new ulong[3] { if_start, code, if_end };
+            }
+            else
+            {
+                return new ulong[1] { code };
+            }
         }
 
         public override void ApplyToDol(Dol dol)
