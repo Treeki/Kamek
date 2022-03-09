@@ -6,28 +6,43 @@ kctPatchExit .equ 5
 
 // general hook definition macros
 kmHook0: .macro type
-	.section ".kamek"
-	.long 0, type
+	.section .kamek
+	_kHook\@: .long 0, type
+	.previous
+	.section .discard
+	li r0, (_kHook\@)@l  // reference to prevent CodeWarrior from deleting the symbol
 	.previous
 	.endm
 kmHook1: .macro type, arg0
-	.section ".kamek"
-	.long 1, type, arg0
+	.section .kamek
+	_kHook\@: .long 1, type, arg0
+	.previous
+	.section .discard
+	li r0, (_kHook\@)@l  // reference to prevent CodeWarrior from deleting the symbol
 	.previous
 	.endm
 kmHook2: .macro type, arg0, arg1
-	.section ".kamek"
-	.long 2, type, arg0, arg1
+	.section .kamek
+	_kHook\@: .long 2, type, arg0, arg1
+	.previous
+	.section .discard
+	li r0, (_kHook\@)@l  // reference to prevent CodeWarrior from deleting the symbol
 	.previous
 	.endm
 kmHook3: .macro type, arg0, arg1, arg2
-	.section ".kamek"
-	.long 3, type, arg0, arg1, arg2
+	.section .kamek
+	_kHook\@: .long 3, type, arg0, arg1, arg2
+	.previous
+	.section .discard
+	li r0, (_kHook\@)@l  // reference to prevent CodeWarrior from deleting the symbol
 	.previous
 	.endm
 kmHook4: .macro type, arg0, arg1, arg2, arg3
-	.section ".kamek"
-	.long 4, type, arg0, arg1, arg2, arg3
+	.section .kamek
+	_kHook\@: .long 4, type, arg0, arg1, arg2, arg3
+	.previous
+	.section .discard
+	li r0, (_kHook\@)@l  // reference to prevent CodeWarrior from deleting the symbol
 	.previous
 	.endm
 
