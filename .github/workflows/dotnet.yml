@@ -1,8 +1,6 @@
-name: .NET
+name: Build with .NET
 
-on:
-  push:
-    branches: [ master ]
+on: [push]
 
 jobs:
   build:
