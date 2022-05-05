@@ -1,8 +1,6 @@
-name: .NET
+name: Build with .NET
 
-on:
-  push:
-    branches: [ master ]
+on: [push]
 
 jobs:
   build:
@@ -21,8 +19,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '6.0.x'
-        include-prerelease: true
-    - shell: cmd
+    - name: Build Kamek for ${ matrix.os }
+      shell: cmd
       run: |
         cd ${{ github.workspace }}
         mkdir build
