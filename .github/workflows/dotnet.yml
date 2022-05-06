@@ -1,0 +1,44 @@
+name: Build with .NET
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        os:
+         - win-x64
+         - osx-x64
+         - linux-x64
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+    - name: Build Kamek for ${{ matrix.os }}
+      shell: cmd
+      run: |
+        cd ${{ github.workspace }}
+        mkdir build
+        cd Kamek
+        dotnet restore
+        dotnet build -p:Configuration=Release
+        pushd %CD%
+        cd bin\Release\net6.0
+        mkdir publish
+        set out=%CD%\publish
+        set rid=${{ matrix.os }}
+        popd
+        dotnet publish -c Release -r %rid% --self-contained true -p:PublishSingleFile=true -o %out%\%rid%
+        pushd %CD%
+        cd %out%\%rid%
+        rm *.pdb
+        cp Kamek* ${{ github.workspace }}\build
+    - uses: actions/upload-artifact@v2.3.1
+      with:
+        name: ${{ matrix.os }}
+        path: ${{ github.workspace }}/build
