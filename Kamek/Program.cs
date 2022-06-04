@@ -20,6 +20,7 @@ namespace Kamek
             uint? baseAddress = null;
             string outputKamekPath = null, outputRiivPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
             string inputDolPath = null, outputDolPath = null;
+            string outputMapPath = null;
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
             var selectedVersions = new List<String>();
@@ -53,6 +54,8 @@ namespace Kamek
                         inputDolPath = arg.Substring(11);
                     else if (arg.StartsWith("-output-dol="))
                         outputDolPath = arg.Substring(12);
+                    else if (arg.StartsWith("-output-map="))
+                        outputMapPath = arg.Substring(12);
                     else if (arg.StartsWith("-externals="))
                         ReadExternals(externals, arg.Substring(11));
                     else if (arg.StartsWith("-versions="))
@@ -160,6 +163,11 @@ namespace Kamek
                         dol.Write(outStream);
                     }
                 }
+
+                if (outputMapPath != null)
+                {
+                    linker.WriteSymbolMap(outputMapPath.Replace("$KV$", version.Key));
+                }
             }
         }
 
@@ -224,6 +232,8 @@ namespace Kamek
             Console.WriteLine("      apply these patches and generate a modified DOL (-static only)");
             Console.WriteLine("    -output-code=file.$KV$.bin");
             Console.WriteLine("      write the combined code+data segment to file.bin (for manual injection or debugging)");
+            Console.WriteLine("    -output-map=file.$KV$.map");
+            Console.WriteLine("      write a list of symbols and their relative offsets (for debugging)");
         }
     }
 }
