@@ -55,10 +55,13 @@ namespace Kamek
             ProcessHooks();
         }
 
-
-
         private Word _baseAddress;
+        private Word _initStart, _initEnd;
+        private Word _textStart, _textEnd;
         private Word _ctorStart, _ctorEnd;
+        private Word _dtorStart, _dtorEnd;
+        private Word _rodataStart, _rodataEnd;
+        private Word _dataStart, _dataEnd;
         private Word _outputStart, _outputEnd;
         private Word _bssStart, _bssEnd;
         private Word _kamekStart, _kamekEnd;
@@ -109,17 +112,34 @@ namespace Kamek
         private void CollectSections()
         {
             _location = _baseAddress;
-
             _outputStart = _location;
+
+            _initStart = _location;
             ImportSections(".init");
+            _initEnd = _location;
+
             ImportSections(".fini");
+
+            _textStart = _location;
             ImportSections(".text");
+            _textEnd = _location;
+
             _ctorStart = _location;
             ImportSections(".ctors");
             _ctorEnd = _location;
+
+            _dtorStart = _location;
             ImportSections(".dtors");
+            _dtorEnd = _location;
+
+            _rodataStart = _location;
             ImportSections(".rodata");
+            _rodataEnd = _location;
+
+            _dataStart = _location;
             ImportSections(".data");
+            _dataStart = _location;
+
             _outputEnd = _location;
 
             // TODO: maybe should align to 0x20 here?
@@ -186,6 +206,24 @@ namespace Kamek
 
             _globalSymbols["__ctor_loc"] = new Symbol { address = _ctorStart };
             _globalSymbols["__ctor_end"] = new Symbol { address = _ctorEnd };
+
+            _globalSymbols["_f_init"] = new Symbol { address = _initStart };
+            _globalSymbols["_e_init"] = new Symbol { address = _initEnd };
+
+            _globalSymbols["_f_text"] = new Symbol { address = _textStart };
+            _globalSymbols["_e_text"] = new Symbol { address = _textEnd };
+
+            _globalSymbols["_f_ctors"] = new Symbol { address = _ctorStart };
+            _globalSymbols["_e_ctors"] = new Symbol { address = _ctorEnd };
+
+            _globalSymbols["_f_dtors"] = new Symbol { address = _dtorStart };
+            _globalSymbols["_e_dtors"] = new Symbol { address = _dtorEnd };
+
+            _globalSymbols["_f_rodata"] = new Symbol { address = _rodataStart };
+            _globalSymbols["_e_rodata"] = new Symbol { address = _rodataEnd };
+
+            _globalSymbols["_f_data"] = new Symbol { address = _dataStart };
+            _globalSymbols["_e_data"] = new Symbol { address = _dataEnd };
 
             foreach (Elf elf in _modules)
             {
@@ -318,6 +356,19 @@ namespace Kamek
             }
 
             throw new InvalidDataException("undefined symbol " + name);
+        }
+
+        public void WriteSymbolMap(string path)
+        {
+            using StreamWriter file = new StreamWriter(path, false);
+            file.WriteLine("Kamek Binary Map");
+            file.WriteLine("  Offset   Size   Name");
+            foreach (var s in _globalSymbols)
+            {
+                String name = s.Key;
+                Symbol sym = s.Value;
+                file.WriteLine(String.Format("  {0:X8} {1:X6} {2}", sym.address.Value, sym.size, name));
+            }
         }
         #endregion
 
