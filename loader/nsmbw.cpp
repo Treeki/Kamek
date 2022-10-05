@@ -109,7 +109,12 @@ const loaderFunctionsEx functions_w = {
 void unknownVersion()
 {
 	// can't do much here!
-	// we can't output a message on screen without a valid OSFatal addr
+	// we can't output a message on screen without a valid OSFatal addr;
+	// all we can really do is set the screen to solid red before we die
+	// (note: Dolphin Emulator currently ignores this)
+	unsigned int *HW_VISOLID = (unsigned int*)0xcd000024;
+	*HW_VISOLID = 0x5aef5101;
+
 	for (;;);
 }
 
