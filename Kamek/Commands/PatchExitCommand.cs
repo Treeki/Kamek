@@ -80,7 +80,9 @@ namespace Kamek.Commands
 
         public override bool Apply(KamekFile file)
         {
-            if (Address.Value.IsAbsolute && Target.IsAbsolute && file.Contains(Address.Value))
+            if (Address.Value.Type == file.BaseAddress.Type
+                    && file.Contains(Address.Value)
+                    && Address.Value.Type == Target.Type)
             {
                 file.WriteUInt32(Address.Value, GenerateInstruction());
                 return true;

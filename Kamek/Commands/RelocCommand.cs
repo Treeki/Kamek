@@ -83,6 +83,9 @@ namespace Kamek.Commands
 
         public override bool Apply(KamekFile file)
         {
+            if (Address.Value.Type != file.BaseAddress.Type)
+                return false;
+
             switch (Id)
             {
                 case Ids.Rel24:
