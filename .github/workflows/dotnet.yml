@@ -14,9 +14,9 @@ jobs:
          - linux-x64
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3.3.0
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3.0.3
       with:
         dotnet-version: '6.0.x'
     - name: Build Kamek for ${{ matrix.os }}
@@ -38,7 +38,7 @@ jobs:
         cd %out%\%rid%
         rm *.pdb
         cp Kamek* ${{ github.workspace }}\build
-    - uses: actions/upload-artifact@v2.3.1
+    - uses: actions/upload-artifact@v3.1.2
       with:
         name: ${{ matrix.os }}
         path: ${{ github.workspace }}/build
