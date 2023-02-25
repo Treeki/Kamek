@@ -36,7 +36,7 @@ namespace Kamek.Commands
             Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
-            return string.Format("0x{0:X8}:dword:0x{1:X8}", Address.Value, GenerateInstruction());
+            return string.Format("0x{0:X8}:dword:0x{1:X8}", Address.Value.Value, GenerateInstruction());
         }
 
         public override IEnumerable<ulong> PackGeckoCodes()
