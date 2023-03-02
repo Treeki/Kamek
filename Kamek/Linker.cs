@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kamek
 {
@@ -342,7 +340,8 @@ namespace Kamek
                 return _globalSymbols[name];
             if (_externalSymbols.ContainsKey(name))
                 return new Symbol { address = new Word(WordType.AbsoluteAddr, _externalSymbols[name]) };
-            if (name.StartsWith("__kAutoMap_")) {
+            if (name.StartsWith("__kAutoMap_"))
+            {
                 var addr = name.Substring(11);
                 if (addr.StartsWith("0x") || addr.StartsWith("0X"))
                     addr = addr.Substring(2);
@@ -359,7 +358,8 @@ namespace Kamek
             using StreamWriter file = new StreamWriter(path, false);
             file.WriteLine("Kamek Binary Map");
             file.WriteLine("  Offset   Size   Name");
-            foreach (var s in _globalSymbols)
+
+            foreach (var s in _globalSymbols.OrderBy(x => x.Value.address.Value))
             {
                 String name = s.Key;
                 Symbol sym = s.Value;
