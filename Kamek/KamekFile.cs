@@ -299,10 +299,6 @@ namespace Kamek
             var codes = new List<ulong>();
 
             // add the big patch
-            long paddingSize = 0;
-            if ((_codeBlob.Length % 8) != 0)
-                paddingSize = 8 - (_codeBlob.Length % 8);
-
             for (int i = 0; i < _codeBlob.Length; i += 4)
             {
                 ulong bits = 0x04000000UL << 32;
