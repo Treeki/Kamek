@@ -188,13 +188,16 @@ namespace Kamek
 
             var elements = new List<string>();
 
-            // add the big patch
-            // (todo: valuefile support)
-            var sb = new StringBuilder(_codeBlob.Length * 2);
-            for (int i = 0; i < _codeBlob.Length; i++)
-                sb.AppendFormat("{0:X2}", _codeBlob[i]);
+            if (_codeBlob.Length > 0)
+            {
+                // add the big patch
+                // (todo: valuefile support)
+                var sb = new StringBuilder(_codeBlob.Length * 2);
+                for (int i = 0; i < _codeBlob.Length; i++)
+                    sb.AppendFormat("{0:X2}", _codeBlob[i]);
 
-            elements.Add(string.Format("<memory offset='0x{0:X8}' value='{1}' />", _baseAddress.Value, sb.ToString()));
+                elements.Add(string.Format("<memory offset='0x{0:X8}' value='{1}' />", _baseAddress.Value, sb.ToString()));
+            }
 
             // add individual patches
             foreach (var pair in _commands)
@@ -255,28 +258,31 @@ namespace Kamek
 
             var codes = new List<ulong>();
 
-            // add the big patch
-            long paddingSize = 0;
-            if ((_codeBlob.Length % 8) != 0)
-                paddingSize = 8 - (_codeBlob.Length % 8);
-
-            ulong header = 0x06000000UL << 32;
-            header |= (ulong)(_baseAddress.Value & 0x1FFFFFF) << 32;
-            header |= (ulong)(_codeBlob.Length + paddingSize) & 0xFFFFFFFF;
-            codes.Add(header);
-
-            for (int i = 0; i < _codeBlob.Length; i += 8)
+            if (_codeBlob.Length > 0)
             {
-                ulong bits = 0;
-                if (i < _codeBlob.Length) bits |= (ulong)_codeBlob[i] << 56;
-                if ((i + 1) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 1] << 48;
-                if ((i + 2) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 2] << 40;
-                if ((i + 3) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 3] << 32;
-                if ((i + 4) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 4] << 24;
-                if ((i + 5) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 5] << 16;
-                if ((i + 6) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 6] << 8;
-                if ((i + 7) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 7];
-                codes.Add(bits);
+                // add the big patch
+                long paddingSize = 0;
+                if ((_codeBlob.Length % 8) != 0)
+                    paddingSize = 8 - (_codeBlob.Length % 8);
+
+                ulong header = 0x06000000UL << 32;
+                header |= (ulong)(_baseAddress.Value & 0x1FFFFFF) << 32;
+                header |= (ulong)(_codeBlob.Length + paddingSize) & 0xFFFFFFFF;
+                codes.Add(header);
+
+                for (int i = 0; i < _codeBlob.Length; i += 8)
+                {
+                    ulong bits = 0;
+                    if (i < _codeBlob.Length) bits |= (ulong)_codeBlob[i] << 56;
+                    if ((i + 1) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 1] << 48;
+                    if ((i + 2) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 2] << 40;
+                    if ((i + 3) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 3] << 32;
+                    if ((i + 4) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 4] << 24;
+                    if ((i + 5) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 5] << 16;
+                    if ((i + 6) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 6] << 8;
+                    if ((i + 7) < _codeBlob.Length) bits |= (ulong)_codeBlob[i + 7];
+                    codes.Add(bits);
+                }
             }
 
             // add individual patches
@@ -327,23 +333,26 @@ namespace Kamek
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary into a DOL");
 
-            // find an empty text section
-            int victimSection = -1;
-            for (int i = dol.Sections.Length - 1; i >= 0; i--)
+            if (_codeBlob.Length > 0)
             {
-                if (dol.Sections[i].Data.Length == 0)
+                // find an empty text section
+                int victimSection = -1;
+                for (int i = dol.Sections.Length - 1; i >= 0; i--)
                 {
-                    victimSection = i;
-                    break;
+                    if (dol.Sections[i].Data.Length == 0)
+                    {
+                        victimSection = i;
+                        break;
+                    }
                 }
+
+                if (victimSection == -1)
+                    throw new InvalidOperationException("cannot find an empty text section in the DOL");
+
+                // throw the code blob into it
+                dol.Sections[victimSection].LoadAddress = _baseAddress.Value;
+                dol.Sections[victimSection].Data = _codeBlob;
             }
-
-            if (victimSection == -1)
-                throw new InvalidOperationException("cannot find an empty text section in the DOL");
-
-            // throw the code blob into it
-            dol.Sections[victimSection].LoadAddress = _baseAddress.Value;
-            dol.Sections[victimSection].Data = _codeBlob;
 
             // apply all patches
             foreach (var pair in _commands)
