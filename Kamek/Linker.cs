@@ -188,9 +188,14 @@ namespace Kamek
             public uint size;
             public bool isWeak;
         }
+        private struct SymbolName
+        {
+            public string name;
+            public ushort shndx;
+        }
         private Dictionary<string, Symbol> _globalSymbols = null;
         private Dictionary<Elf, Dictionary<string, Symbol>> _localSymbols = null;
-        private Dictionary<Elf.ElfSection, string[]> _symbolTableContents = null;
+        private Dictionary<Elf.ElfSection, SymbolName[]> _symbolTableContents = null;
         private Dictionary<string, uint> _externalSymbols = null;
         private Dictionary<Word, uint> _symbolSizes = null;
         public IReadOnlyDictionary<Word, uint> SymbolSizes { get { return _symbolSizes; } }
@@ -199,7 +204,7 @@ namespace Kamek
         {
             _globalSymbols = new Dictionary<string, Symbol>();
             _localSymbols = new Dictionary<Elf, Dictionary<string, Symbol>>();
-            _symbolTableContents = new Dictionary<Elf.ElfSection, string[]>();
+            _symbolTableContents = new Dictionary<Elf.ElfSection, SymbolName[]>();
             _symbolSizes = new Dictionary<Word, uint>();
 
             _globalSymbols["__ctor_loc"] = new Symbol { address = _ctorStart };
@@ -244,19 +249,19 @@ namespace Kamek
             }
         }
 
-        private string[] ParseSymbolTable(Elf elf, Elf.ElfSection symtab, Elf.ElfSection strtab, Dictionary<string, Symbol> locals)
+        private SymbolName[] ParseSymbolTable(Elf elf, Elf.ElfSection symtab, Elf.ElfSection strtab, Dictionary<string, Symbol> locals)
         {
             if (symtab.sh_entsize != 16)
                 throw new InvalidDataException("Invalid symbol table format (sh_entsize != 16)");
             if (strtab.sh_type != Elf.ElfSection.Type.SHT_STRTAB)
                 throw new InvalidDataException("String table does not have type SHT_STRTAB");
 
-            var symbolNames = new List<string>();
+            var symbolNames = new List<SymbolName>();
             var reader = new BinaryReader(new MemoryStream(symtab.data));
             int count = symtab.data.Length / 16;
 
             // always ignore the first symbol
-            symbolNames.Add(null);
+            symbolNames.Add(new SymbolName());
             reader.BaseStream.Seek(16, SeekOrigin.Begin);
 
             for (int i = 1; i < count; i++)
@@ -274,18 +279,9 @@ namespace Kamek
 
                 string name = Util.ExtractNullTerminatedString(strtab.data, (int)st_name);
 
-                symbolNames.Add(name);
+                symbolNames.Add(new SymbolName { name = name, shndx = st_shndx });
                 if (name.Length == 0 || st_shndx == 0)
                     continue;
-
-                // What location is this referencing?
-                Elf.ElfSection refSection;
-                if (st_shndx < 0xFF00)
-                    refSection = elf.Sections[st_shndx];
-                else if (st_shndx == 0xFFF1) // absolute symbol
-                    refSection = null;
-                else
-                    throw new InvalidDataException("unknown section index found in symbol table");
 
                 Word addr;
                 if (st_shndx == 0xFFF1)
@@ -436,13 +432,14 @@ namespace Kamek
                 if (!_sectionBases.ContainsKey(section))
                     continue; // we don't care about this
 
-                string symName = _symbolTableContents[symtab][symIndex];
+                SymbolName symbol = _symbolTableContents[symtab][symIndex];
+                string symName = symbol.name;
                 //Console.WriteLine("{0,-30} {1}", symName, reloc);
 
                 Word source = _sectionBases[section] + r_offset;
-                Word dest = ResolveSymbol(elf, symName).address + r_addend;
+                Word dest = (String.IsNullOrEmpty(symName) ? _sectionBases[elf.Sections[symbol.shndx]] : ResolveSymbol(elf, symName).address) + r_addend;
 
-                //Console.WriteLine("Linking from {0} to {1}", source, dest);
+                //Console.WriteLine("Linking from 0x{0:X8} to 0x{1:X8}", source.Value, dest.Value);
 
                 if (!KamekUseReloc(reloc, source, dest))
                     _fixups.Add(new Fixup { type = reloc, source = source, dest = dest });
