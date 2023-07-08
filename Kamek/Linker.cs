@@ -136,7 +136,7 @@ namespace Kamek
 
             _dataStart = _location;
             ImportSections(".data");
-            _dataStart = _location;
+            _dataEnd = _location;
 
             _outputEnd = _location;
 
