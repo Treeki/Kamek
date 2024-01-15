@@ -68,7 +68,7 @@ namespace Kamek
                 else
                 {
                     Console.WriteLine("adding {0} as object..", arg);
-                    using (var stream = new FileStream(arg, FileMode.Open))
+                    using (var stream = new FileStream(arg, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
                         modules.Add(new Elf(stream));
                     }
@@ -154,7 +154,7 @@ namespace Kamek
 
                 if (outputDolPath != null)
                 {
-                    var dol = new Dol(new FileStream(inputDolPath.Replace("$KV$", version.Key), FileMode.Open));
+                    var dol = new Dol(new FileStream(inputDolPath.Replace("$KV$", version.Key), FileMode.Open, FileAccess.ReadWrite, FileShare.None));
                     kf.InjectIntoDol(dol);
 
                     var outpath = outputDolPath.Replace("$KV$", version.Key);
