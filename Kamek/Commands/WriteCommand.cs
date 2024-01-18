@@ -69,7 +69,7 @@ namespace Kamek.Commands
             if (Original.HasValue)
             {
                 Original.Value.AssertNotRelative();
-                bw.WriteBE(Original.Value);
+                bw.WriteBE(Original.Value.Value);
             }
         }
 
