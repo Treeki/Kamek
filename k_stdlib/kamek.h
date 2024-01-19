@@ -36,6 +36,7 @@ typedef volatile f32 vf32;
 
 typedef unsigned long size_t;
 
+#include "base/context.h"
 #include "base/hooks.h"
 #include "base/c_stdlib.h"
 #include "base/rvl_sdk.h"

@@ -1,6 +1,9 @@
 #ifndef __KAMEK_BASE_HOOKS_H
 #define __KAMEK_BASE_HOOKS_H
 
+#include "base/context.h"
+
+
 // allow Kamek hooks to be defined from C++ source files
 #pragma section ".kamek"
 
@@ -81,5 +84,63 @@
 	kmCallDefInt(__COUNTER__, addr, returnType, __VA_ARGS__)
 #define kmCallDefAsm(addr) \
 	kmCallDefInt(__COUNTER__, addr, asm void, )
+
+// kmSafeBranchDefCpp
+//   Set up a branch (b) from a specific instruction to an auto-generated
+//   trampoline that saves all registers before calling a function
+//   defined directly underneath, and restores them afterward.
+#define kmSafeBranchDefInt(counter, addr, ...) \
+	static void kmIdentifier(UserFunc, counter) (kmContext &_kctx); \
+	static asm void kmIdentifier(Trampoline, counter) () { \
+		nofralloc                                       ; \
+		kmSaveContext                                   ; \
+		bl kmIdentifier(UserFunc, counter)              ; \
+		kmRestoreContext                                ; \
+		__VA_ARGS__  /* run the original instruction */ ; \
+		blr      /* Kamek will replace this with a b */ ; \
+	}; \
+	kmBranch(addr, kmIdentifier(Trampoline, counter)); \
+	kmPatchExitPoint(kmIdentifier(Trampoline, counter), addr + 4); \
+	static void kmIdentifier(UserFunc, counter) (kmContext &_kctx)
+
+// The way this is implemented is wonky, but kmSafeBranchDefCpp
+// basically supports two forms:
+//     kmSafeBranchDefCpp(addr)
+//     kmSafeBranchDefCpp(addr, instruction)
+// "instruction" is the original instruction you're hooking on, if you'd
+// like to execute a copy of it in the trampoline to avoid losing it
+// from the function being hooked into.
+// Examples:
+//     kmSafeBranchDefCpp(0x80345678) { ... }
+//     kmSafeBranchDefCpp(0x80345678, addi r3, r4, 5) { ... }
+// For an explanation of the macro implementation, see
+// https://codecraft.co/2014/11/25/variadic-macros-tricks/
+#define _GET_9TH_ARG(_1, _2, _3, _4, _5, _6, _7, _8, N, ...) N
+#define kmSafeBranchDefCpp1(addr) \
+	kmSafeBranchDefInt(__COUNTER__, addr,)
+#define kmSafeBranchDefCpp2(addr, _1) \
+	kmSafeBranchDefInt(__COUNTER__, addr, _1)
+#define kmSafeBranchDefCpp3(addr, _1, _2) \
+	kmSafeBranchDefInt(__COUNTER__, addr, _1, _2)
+#define kmSafeBranchDefCpp4(addr, _1, _2, _3) \
+	kmSafeBranchDefInt(__COUNTER__, addr, _1, _2, _3)
+#define kmSafeBranchDefCpp5(addr, _1, _2, _3, _4) \
+	kmSafeBranchDefInt(__COUNTER__, addr, _1, _2, _3, _4)
+#define kmSafeBranchDefCpp6(addr, _1, _2, _3, _4, _5) \
+	kmSafeBranchDefInt(__COUNTER__, addr, _1, _2, _3, _4, _5)
+#define kmSafeBranchDefCpp7(addr, _1, _2, _3, _4, _5, _6) \
+	kmSafeBranchDefInt(__COUNTER__, addr, _1, _2, _3, _4, _5, _6)
+#define kmSafeBranchDefCpp(...) \
+	_GET_9TH_ARG(, ##__VA_ARGS__, \
+	kmSafeBranchDefCpp7, kmSafeBranchDefCpp6, kmSafeBranchDefCpp5, \
+	kmSafeBranchDefCpp4, kmSafeBranchDefCpp3, kmSafeBranchDefCpp2, \
+	kmSafeBranchDefCpp1,)(__VA_ARGS__)
+
+// For use in kmSafeBranchDefCpp functions. Maps a register in the
+// hooked context to a local variable of some user-specified
+// 32-bit-sized type
+#define kmUseReg(reg, name, type) \
+	type &name = reinterpret_cast<type &>(_kctx.reg);
+
 
 #endif
