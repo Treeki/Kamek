@@ -10,10 +10,25 @@ namespace Kamek
 {
     class Program
     {
+        static bool Loud = true;
+
         static void Main(string[] args)
         {
-            Console.WriteLine("Kamek 2.0 by Ninji/Ash Wolf - https://github.com/Treeki/Kamek");
-            Console.WriteLine();
+            // Check for the -q/-quiet option first, so we can know if
+            // we should print the banner line
+            foreach (var arg in args)
+            {
+                if (arg == "-quiet" || arg == "-q")
+                {
+                    Loud = false;
+                    continue;
+                }
+            }
+
+            if (Loud) {
+                Console.WriteLine("Kamek 2.0 by Ninji/Ash Wolf - https://github.com/Treeki/Kamek");
+                Console.WriteLine();
+            }
 
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
@@ -62,12 +77,17 @@ namespace Kamek
                         versions = new VersionInfo(arg.Substring(10));
                     else if (arg.StartsWith("-select-version="))
                         selectedVersions.Add(arg.Substring(16));
+#pragma warning disable 642
+                    else if (arg == "-quiet" || arg == "-q")
+                        ;  // already handled separately, earlier
+#pragma warning restore 642
                     else
                         Console.WriteLine("warning: unrecognised argument: {0}", arg);
                 }
                 else
                 {
-                    Console.WriteLine("adding {0} as object..", arg);
+                    if (Loud)
+                        Console.WriteLine("adding {0} as object..", arg);
                     using (var stream = new FileStream(arg, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
                         modules.Add(new Elf(stream));
@@ -123,10 +143,12 @@ namespace Kamek
             {
                 if (selectedVersions.Count > 0 && !selectedVersions.Contains(version.Key))
                 {
-                    Console.WriteLine("(skipping version {0} as it's not selected)", version.Key);
+                    if (Loud)
+                        Console.WriteLine("(skipping version {0} as it's not selected)", version.Key);
                     continue;
                 }
-                Console.WriteLine("linking version {0}...", version.Key);
+                if (Loud)
+                    Console.WriteLine("linking version {0}...", version.Key);
 
                 var linker = new Linker(version.Value);
                 foreach (var module in modules)
@@ -202,6 +224,10 @@ namespace Kamek
             Console.WriteLine("  Kamek file1.o [file2.o...] [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
+            Console.WriteLine("  General:");
+            Console.WriteLine("    -quiet / -q");
+            Console.WriteLine("      don't print anything to stdout unless there are warnings or errors");
+            Console.WriteLine();
             Console.WriteLine("  Build Mode (select one; defaults to -dynamic):");
             Console.WriteLine("    -dynamic");
             Console.WriteLine("      generate a dynamically linked Kamek binary for use with the loader");
