@@ -58,7 +58,7 @@ namespace Kamek.Commands
         public abstract IEnumerable<ulong> PackGeckoCodes();
         public abstract IEnumerable<ulong> PackActionReplayCodes();
         public abstract bool Apply(KamekFile file);
-        public abstract void ApplyToDol(Dol dol);
+        public abstract void ApplyToCodeFile(CodeFiles.CodeFile file);
 
         public virtual void CalculateAddress(KamekFile file) {}
 

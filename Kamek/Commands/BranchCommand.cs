@@ -74,12 +74,12 @@ namespace Kamek.Commands
             return false;
         }
 
-        public override void ApplyToDol(Dol dol)
+        public override void ApplyToCodeFile(CodeFiles.CodeFile file)
         {
             Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
-            dol.WriteUInt32(Address.Value.Value, GenerateInstruction());
+            file.WriteUInt32(Address.Value.Value, GenerateInstruction());
         }
 
 

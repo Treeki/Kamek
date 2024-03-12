@@ -73,7 +73,7 @@ namespace Kamek.Commands
             throw new NotImplementedException();
         }
 
-        public override void ApplyToDol(Dol dol)
+        public override void ApplyToCodeFile(CodeFiles.CodeFile file)
         {
             throw new NotImplementedException();
         }

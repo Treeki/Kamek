@@ -43,7 +43,7 @@ namespace Kamek.Commands
             throw new NotImplementedException();
         }
 
-        public override void ApplyToDol(Dol dol)
+        public override void ApplyToCodeFile(CodeFiles.CodeFile file)
         {
             Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
@@ -52,28 +52,28 @@ namespace Kamek.Commands
             {
                 case Ids.Rel24:
                     long delta = Target - Address.Value;
-                    uint insn = dol.ReadUInt32(Address.Value.Value) & 0xFC000003;
+                    uint insn = file.ReadUInt32(Address.Value.Value) & 0xFC000003;
                     insn |= ((uint)delta & 0x3FFFFFC);
-                    dol.WriteUInt32(Address.Value.Value, insn);
+                    file.WriteUInt32(Address.Value.Value, insn);
                     break;
 
                 case Ids.Addr32:
-                    dol.WriteUInt32(Address.Value.Value, Target.Value);
+                    file.WriteUInt32(Address.Value.Value, Target.Value);
                     break;
 
                 case Ids.Addr16Lo:
-                    dol.WriteUInt16(Address.Value.Value, (ushort)(Target.Value & 0xFFFF));
+                    file.WriteUInt16(Address.Value.Value, (ushort)(Target.Value & 0xFFFF));
                     break;
 
                 case Ids.Addr16Hi:
-                    dol.WriteUInt16(Address.Value.Value, (ushort)(Target.Value >> 16));
+                    file.WriteUInt16(Address.Value.Value, (ushort)(Target.Value >> 16));
                     break;
 
                 case Ids.Addr16Ha:
                     ushort v = (ushort)(Target.Value >> 16);
                     if ((Target.Value & 0x8000) == 0x8000)
                         v++;
-                    dol.WriteUInt16(Address.Value.Value, v);
+                    file.WriteUInt16(Address.Value.Value, v);
                     break;
 
                 default:

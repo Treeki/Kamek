@@ -333,7 +333,7 @@ namespace Kamek
             return string.Join("\n", elements);
         }
 
-        public void InjectIntoDol(Dol dol)
+        public void InjectIntoDol(CodeFiles.Dol dol)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary into a DOL");
@@ -361,7 +361,37 @@ namespace Kamek
 
             // apply all patches
             foreach (var pair in _commands)
-                pair.Value.ApplyToDol(dol);
+                pair.Value.ApplyToCodeFile(dol);
+        }
+
+        public void InjectIntoAlf(CodeFiles.Alf alf)
+        {
+            if (_baseAddress.Type == WordType.RelativeAddr)
+                throw new InvalidOperationException("cannot pack a dynamically linked binary into an ALF");
+
+            if (_codeBlob.Length > 0)
+            {
+                CodeFiles.Alf.Section codeSection = new CodeFiles.Alf.Section();
+                codeSection.LoadAddress = _baseAddress.Value;
+                codeSection.Size = (uint)_codeBlob.Length;
+                codeSection.Data = _codeBlob;
+                codeSection.Symbols = new List<CodeFiles.Alf.Symbol>();
+                alf.Sections.Add(codeSection);
+            }
+
+            if (_bssSize > 0)
+            {
+                CodeFiles.Alf.Section bssSection = new CodeFiles.Alf.Section();
+                bssSection.LoadAddress = (uint)(_baseAddress.Value + _codeBlob.Length);
+                bssSection.Size = (uint)_bssSize;
+                bssSection.Data = new byte[0];
+                bssSection.Symbols = new List<CodeFiles.Alf.Symbol>();
+                alf.Sections.Add(bssSection);
+            }
+
+            // apply all patches
+            foreach (var pair in _commands)
+                pair.Value.ApplyToCodeFile(alf);
         }
 
         private static string InjectLinesIntoTemplate(string template, string[] lines, string formatName)
