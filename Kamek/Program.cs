@@ -20,6 +20,7 @@ namespace Kamek
             uint? baseAddress = null;
             string outputKamekPath = null, outputRiivPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
             string inputDolPath = null, outputDolPath = null;
+            string inputAlfPath = null, outputAlfPath = null;
             string outputMapPath = null;
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
@@ -54,6 +55,10 @@ namespace Kamek
                         inputDolPath = arg.Substring(11);
                     else if (arg.StartsWith("-output-dol="))
                         outputDolPath = arg.Substring(12);
+                    else if (arg.StartsWith("-input-alf="))
+                        inputAlfPath = arg.Substring(11);
+                    else if (arg.StartsWith("-output-alf="))
+                        outputAlfPath = arg.Substring(12);
                     else if (arg.StartsWith("-output-map="))
                         outputMapPath = arg.Substring(12);
                     else if (arg.StartsWith("-externals="))
@@ -87,7 +92,7 @@ namespace Kamek
                 Console.WriteLine("no input files specified");
                 return;
             }
-            if (outputKamekPath == null && outputRiivPath == null && outputDolphinPath == null && outputGeckoPath == null && outputARPath == null && outputCodePath == null && outputDolPath == null)
+            if (outputKamekPath == null && outputRiivPath == null && outputDolphinPath == null && outputGeckoPath == null && outputARPath == null && outputCodePath == null && outputDolPath == null && outputAlfPath == null)
             {
                 Console.WriteLine("no output path(s) specified");
                 return;
@@ -95,6 +100,11 @@ namespace Kamek
             if (outputDolPath != null && inputDolPath == null)
             {
                 Console.WriteLine("input dol path not specified");
+                return;
+            }
+            if (outputAlfPath != null && inputAlfPath == null)
+            {
+                Console.WriteLine("input alf path not specified");
                 return;
             }
 
@@ -110,6 +120,7 @@ namespace Kamek
                 ambiguousOutputPath |= (outputARPath != null && !outputARPath.Contains("$KV$"));
                 ambiguousOutputPath |= (outputCodePath != null && !outputCodePath.Contains("$KV$"));
                 ambiguousOutputPath |= (outputDolPath != null && !outputDolPath.Contains("$KV$"));
+                ambiguousOutputPath |= (outputAlfPath != null && !outputAlfPath.Contains("$KV$"));
                 if (ambiguousOutputPath)
                 {
                     Console.WriteLine("ERROR: this configuration builds for multiple game versions, and some of the outputs will be overwritten");
@@ -154,13 +165,24 @@ namespace Kamek
 
                 if (outputDolPath != null)
                 {
-                    var dol = new Dol(new FileStream(inputDolPath.Replace("$KV$", version.Key), FileMode.Open, FileAccess.ReadWrite, FileShare.None));
+                    var dol = new CodeFiles.Dol(new FileStream(inputDolPath.Replace("$KV$", version.Key), FileMode.Open, FileAccess.ReadWrite, FileShare.None));
                     kf.InjectIntoDol(dol);
 
                     var outpath = outputDolPath.Replace("$KV$", version.Key);
                     using (var outStream = new FileStream(outpath, FileMode.Create))
                     {
                         dol.Write(outStream);
+                    }
+                }
+                else if (outputAlfPath != null)
+                {
+                    var alf = new CodeFiles.Alf(new FileStream(inputAlfPath.Replace("$KV$", version.Key), FileMode.Open, FileAccess.ReadWrite, FileShare.None));
+                    kf.InjectIntoAlf(alf);
+
+                    var outpath = outputAlfPath.Replace("$KV$", version.Key);
+                    using (var outStream = new FileStream(outpath, FileMode.Create))
+                    {
+                        alf.Write(outStream);
                     }
                 }
 
@@ -230,6 +252,8 @@ namespace Kamek
             Console.WriteLine("      write a list of Action Replay codes (-static only)");
             Console.WriteLine("    -input-dol=file.$KV$.dol -output-dol=file2.$KV$.dol");
             Console.WriteLine("      apply these patches and generate a modified DOL (-static only)");
+            Console.WriteLine("    -input-alf=file.$KV$.alf -output-alf=file2.$KV$.alf");
+            Console.WriteLine("      apply these patches and generate a modified ALF (-static only)");
             Console.WriteLine("    -output-code=file.$KV$.bin");
             Console.WriteLine("      write the combined code+data segment to file.bin (for manual injection or debugging)");
             Console.WriteLine("    -output-map=file.$KV$.map");
