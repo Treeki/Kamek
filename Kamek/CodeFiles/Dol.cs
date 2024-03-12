@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace Kamek
+namespace Kamek.CodeFiles
 {
-    class Dol
+    class Dol : CodeFile
     {
         public struct Section
         {
@@ -45,7 +45,7 @@ namespace Kamek
         }
 
 
-        public void Write(Stream output)
+        public override void Write(Stream output)
         {
             var bw = new BinaryWriter(output);
 
@@ -101,7 +101,7 @@ namespace Kamek
         }
 
 
-        public uint ReadUInt32(uint address)
+        public override uint ReadUInt32(uint address)
         {
             int sectionID;
             uint offset;
@@ -111,7 +111,7 @@ namespace Kamek
             return Util.ExtractUInt32(Sections[sectionID].Data, offset);
         }
 
-        public void WriteUInt32(uint address, uint value)
+        public override void WriteUInt32(uint address, uint value)
         {
             int sectionID;
             uint offset;
@@ -122,7 +122,7 @@ namespace Kamek
         }
 
 
-        public ushort ReadUInt16(uint address)
+        public override ushort ReadUInt16(uint address)
         {
             int sectionID;
             uint offset;
@@ -132,7 +132,7 @@ namespace Kamek
             return Util.ExtractUInt16(Sections[sectionID].Data, offset);
         }
 
-        public void WriteUInt16(uint address, ushort value)
+        public override void WriteUInt16(uint address, ushort value)
         {
             int sectionID;
             uint offset;
@@ -143,7 +143,7 @@ namespace Kamek
         }
 
 
-        public byte ReadByte(uint address)
+        public override byte ReadByte(uint address)
         {
             int sectionID;
             uint offset;
@@ -153,7 +153,7 @@ namespace Kamek
             return Sections[sectionID].Data[offset];
         }
 
-        public void WriteByte(uint address, byte value)
+        public override void WriteByte(uint address, byte value)
         {
             int sectionID;
             uint offset;

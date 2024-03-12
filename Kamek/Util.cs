@@ -16,11 +16,25 @@ namespace Kamek
             return (ushort)((a << 8) | b);
         }
 
+        public static ushort ReadLittleUInt16(this BinaryReader br)
+        {
+            byte a = br.ReadByte();
+            byte b = br.ReadByte();
+            return (ushort)((b << 8) | a);
+        }
+
         public static uint ReadBigUInt32(this BinaryReader br)
         {
             ushort a = br.ReadBigUInt16();
             ushort b = br.ReadBigUInt16();
             return (uint)((a << 16) | b);
+        }
+
+        public static uint ReadLittleUInt32(this BinaryReader br)
+        {
+            ushort a = br.ReadLittleUInt16();
+            ushort b = br.ReadLittleUInt16();
+            return (uint)((b << 16) | a);
         }
 
         public static int ReadBigInt32(this BinaryReader br)
@@ -30,16 +44,35 @@ namespace Kamek
             return (int)((a << 16) | b);
         }
 
+        public static int ReadLittleInt32(this BinaryReader br)
+        {
+            ushort a = br.ReadLittleUInt16();
+            ushort b = br.ReadLittleUInt16();
+            return (int)((b << 16) | a);
+        }
+
         public static void WriteBE(this BinaryWriter bw, ushort value)
         {
             bw.Write((byte)(value >> 8));
             bw.Write((byte)(value & 0xFF));
         }
 
+        public static void WriteLE(this BinaryWriter bw, ushort value)
+        {
+            bw.Write((byte)(value & 0xFF));
+            bw.Write((byte)(value >> 8));
+        }
+
         public static void WriteBE(this BinaryWriter bw, uint value)
         {
             bw.WriteBE((ushort)(value >> 16));
             bw.WriteBE((ushort)(value & 0xFFFF));
+        }
+
+        public static void WriteLE(this BinaryWriter bw, uint value)
+        {
+            bw.WriteLE((ushort)(value & 0xFFFF));
+            bw.WriteLE((ushort)(value >> 16));
         }
 
 
