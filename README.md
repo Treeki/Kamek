@@ -37,6 +37,7 @@ Support for other compilers such as GCC and Clang is not planned.
  CodeWarrior, so features like classes and virtual inheritance only work
  properly when CW is used.)
 
+The loader for dynamic patches is available in [the loader directory](loader).
 
 
 [cw]: http://cache.nxp.com/lgfiles/devsuites/PowerPC/CW55xx_v2_10_SE.exe?WT_TYPE=IDE%20-%20Debug,%20Compile%20and%20Build%20Tools&WT_VENDOR=FREESCALE&WT_FILE_FORMAT=exe&WT_ASSET=Downloads&fileExt=.exe
