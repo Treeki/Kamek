@@ -196,7 +196,7 @@ namespace Kamek
                 for (int i = 0; i < _codeBlob.Length; i++)
                     sb.AppendFormat("{0:X2}", _codeBlob[i]);
 
-                elements.Add(string.Format("<memory offset='0x{0:X8}' value='{1}' />", _baseAddress.Value, sb.ToString()));
+                elements.Add(string.Format("<memory offset=\"0x{0:X8}\" value=\"{1}\" />", _baseAddress.Value, sb.ToString()));
             }
 
             // add individual patches
