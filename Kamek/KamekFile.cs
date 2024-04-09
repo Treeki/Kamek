@@ -372,13 +372,13 @@ namespace Kamek
             }
             else
             {
-                int placeholderIndex = template.IndexOf("$KX$");
+                int placeholderIndex = template.IndexOf("$KF$");
                 if (placeholderIndex == -1)
-                    throw new InvalidDataException(string.Format("\"$KX$\" placeholder not found in {0} template", formatName));
-                if (template.IndexOf("$KX$", placeholderIndex + 1) != -1)
-                    throw new InvalidDataException(string.Format("multiple \"$KX$\" placeholders found in {0} template", formatName));
+                    throw new InvalidDataException(string.Format("\"$KF$\" placeholder not found in {0} template", formatName));
+                if (template.IndexOf("$KF$", placeholderIndex + 1) != -1)
+                    throw new InvalidDataException(string.Format("multiple \"$KF$\" placeholders found in {0} template", formatName));
 
-                // If the line containing $KX$ has only whitespace before it,
+                // If the line containing $KF$ has only whitespace before it,
                 // we can use that as indentation for all of our new lines.
                 // Otherwise, be conservative and don't do that.
 
@@ -393,7 +393,7 @@ namespace Kamek
                     joinString = "\n" + placeholderLineStart;
                 }
 
-                return template.Replace("$KX$", string.Join(joinString, lines));
+                return template.Replace("$KF$", string.Join(joinString, lines));
             }
         }
     }
