@@ -28,7 +28,7 @@ namespace Kamek.Commands
             Address.Value.AssertAbsolute();
             Target.AssertAbsolute();
 
-            return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' />", Address.Value.Value, GenerateInstruction());
+            return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X8}\" />", Address.Value.Value, GenerateInstruction());
         }
 
         public override string PackForDolphin()

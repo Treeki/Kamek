@@ -87,20 +87,20 @@ namespace Kamek.Commands
 
                 switch (ValueType)
                 {
-                    case Type.Value8: return string.Format("<memory offset='0x{0:X8}' value='{1:X2}' original='{2:X2}' />", Address.Value.Value, Value.Value, Original.Value.Value);
-                    case Type.Value16: return string.Format("<memory offset='0x{0:X8}' value='{1:X4}' original='{2:X4}' />", Address.Value.Value, Value.Value, Original.Value.Value);
+                    case Type.Value8: return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X2}\" original=\"{2:X2}\" />", Address.Value.Value, Value.Value, Original.Value.Value);
+                    case Type.Value16: return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X4}\" original=\"{2:X4}\" />", Address.Value.Value, Value.Value, Original.Value.Value);
                     case Type.Value32:
-                    case Type.Pointer: return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' original='{2:X8}' />", Address.Value.Value, Value.Value, Original.Value.Value);
+                    case Type.Pointer: return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X8}\" original=\"{2:X8}\" />", Address.Value.Value, Value.Value, Original.Value.Value);
                 }
             }
             else
             {
                 switch (ValueType)
                 {
-                    case Type.Value8: return string.Format("<memory offset='0x{0:X8}' value='{1:X2}' />", Address.Value.Value, Value.Value);
-                    case Type.Value16: return string.Format("<memory offset='0x{0:X8}' value='{1:X4}' />", Address.Value.Value, Value.Value);
+                    case Type.Value8: return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X2}\" />", Address.Value.Value, Value.Value);
+                    case Type.Value16: return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X4}\" />", Address.Value.Value, Value.Value);
                     case Type.Value32:
-                    case Type.Pointer: return string.Format("<memory offset='0x{0:X8}' value='{1:X8}' />", Address.Value.Value, Value.Value);
+                    case Type.Pointer: return string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X8}\" />", Address.Value.Value, Value.Value);
                 }
             }
 
