@@ -24,6 +24,7 @@ namespace Kamek
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
             var selectedVersions = new List<String>();
+			string valuefilePath = null;
 
             foreach (var arg in args)
             {
@@ -62,6 +63,8 @@ namespace Kamek
                         versions = new VersionInfo(arg.Substring(10));
                     else if (arg.StartsWith("-select-version="))
                         selectedVersions.Add(arg.Substring(16));
+					else if (arg.StartsWith("-valuefile="))
+						valuefilePath = arg.Substring(11);
                     else
                         Console.WriteLine("warning: unrecognised argument: {0}", arg);
                 }
@@ -117,6 +120,9 @@ namespace Kamek
                     return;
                 }
             }
+			
+			if (valuefilePath != null && outputRiivPath == null)
+				Console.WriteLine("warning: -valuefile can only be used with -output-riiv");
 
 
             foreach (var version in versions.Mappers)
@@ -142,7 +148,7 @@ namespace Kamek
                 if (outputKamekPath != null)
                     File.WriteAllBytes(outputKamekPath.Replace("$KV$", version.Key), kf.Pack());
                 if (outputRiivPath != null)
-                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution());
+                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution(valuefilePath));
                 if (outputDolphinPath != null)
                     File.WriteAllText(outputDolphinPath.Replace("$KV$", version.Key), kf.PackDolphin());
                 if (outputGeckoPath != null)
@@ -234,6 +240,10 @@ namespace Kamek
             Console.WriteLine("      write the combined code+data segment to file.bin (for manual injection or debugging)");
             Console.WriteLine("    -output-map=file.$KV$.map");
             Console.WriteLine("      write a list of symbols and their relative offsets (for debugging)");
+			Console.WriteLine();
+			Console.WriteLine("  Output Configuration:");
+            Console.WriteLine("    -valuefile=loader.bin");
+            Console.WriteLine("      if -output-riiv is used, emit a \"valuefile\" attribute containing this path string, instead of \"value\"");
         }
     }
 }

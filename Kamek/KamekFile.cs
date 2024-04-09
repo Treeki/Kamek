@@ -181,7 +181,7 @@ namespace Kamek
             }
         }
 
-        public string PackRiivolution()
+        public string PackRiivolution(string valuefilePath)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary as a Riivolution patch");
@@ -191,12 +191,17 @@ namespace Kamek
             if (_codeBlob.Length > 0)
             {
                 // add the big patch
-                // (todo: valuefile support)
-                var sb = new StringBuilder(_codeBlob.Length * 2);
-                for (int i = 0; i < _codeBlob.Length; i++)
-                    sb.AppendFormat("{0:X2}", _codeBlob[i]);
+                if (valuefilePath != null)
+					elements.Add(string.Format("<memory offset=\"0x{0:X8}\" valuefile=\"{1}\" />", _baseAddress.Value, valuefilePath));
+					
+				else
+				{
+					var sb = new StringBuilder(_codeBlob.Length * 2);
+					for (int i = 0; i < _codeBlob.Length; i++)
+						sb.AppendFormat("{0:X2}", _codeBlob[i]);
 
-                elements.Add(string.Format("<memory offset=\"0x{0:X8}\" value=\"{1}\" />", _baseAddress.Value, sb.ToString()));
+					elements.Add(string.Format("<memory offset=\"0x{0:X8}\" value=\"{1}\" />", _baseAddress.Value, sb.ToString()));
+				}
             }
 
             // add individual patches
