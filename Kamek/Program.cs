@@ -290,11 +290,11 @@ namespace Kamek
             Console.WriteLine("  Output Configuration:");
             Console.WriteLine("    -input-riiv=file.$KV$.xml");
             Console.WriteLine("      if -output-riiv is used, use this file as a template, where");
-            Console.WriteLine("      the magic string \"$KX$\" will be replaced by the new XML tags.");
+            Console.WriteLine("      the magic string \"$KF$\" will be replaced by the new XML tags.");
             Console.WriteLine("      otherwise, the new XML tags will be emitted by themselves");
             Console.WriteLine("    -input-dolphin=file.$KV$.ini");
             Console.WriteLine("      if -output-dolphin is used, use this file as a template, where");
-            Console.WriteLine("      the magic string \"$KX$\" will be replaced by the new INI lines.");
+            Console.WriteLine("      the magic string \"$KF$\" will be replaced by the new INI lines.");
             Console.WriteLine("      otherwise, the new INI lines will be emitted by themselves");
             Console.WriteLine("    -valuefile=loader.bin");
             Console.WriteLine("      if -output-riiv is used, emit a \"valuefile\" attribute containing this path string, instead of \"value\"");
