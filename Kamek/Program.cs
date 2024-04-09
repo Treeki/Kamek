@@ -24,6 +24,7 @@ namespace Kamek
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
             var selectedVersions = new List<String>();
+			bool useValuefile = false;
 
             foreach (var arg in args)
             {
@@ -62,6 +63,8 @@ namespace Kamek
                         versions = new VersionInfo(arg.Substring(10));
                     else if (arg.StartsWith("-select-version="))
                         selectedVersions.Add(arg.Substring(16));
+					else if (arg.StartsWith("-use-valuefile"))
+						useValuefile = true;
                     else
                         Console.WriteLine("warning: unrecognised argument: {0}", arg);
                 }
@@ -142,7 +145,7 @@ namespace Kamek
                 if (outputKamekPath != null)
                     File.WriteAllBytes(outputKamekPath.Replace("$KV$", version.Key), kf.Pack());
                 if (outputRiivPath != null)
-                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution());
+                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution(useValuefile, outputCodePath));
                 if (outputDolphinPath != null)
                     File.WriteAllText(outputDolphinPath.Replace("$KV$", version.Key), kf.PackDolphin());
                 if (outputGeckoPath != null)
@@ -234,6 +237,10 @@ namespace Kamek
             Console.WriteLine("      write the combined code+data segment to file.bin (for manual injection or debugging)");
             Console.WriteLine("    -output-map=file.$KV$.map");
             Console.WriteLine("      write a list of symbols and their relative offsets (for debugging)");
+			Console.WriteLine();
+			Console.WriteLine("  Output Configuration:");
+            Console.WriteLine("    -use-valuefile");
+            Console.WriteLine("      if -output-riiv and -output-code are both used, emit a <valuefile> tag in the XML fragment");
         }
     }
 }
