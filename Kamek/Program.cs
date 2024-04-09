@@ -33,7 +33,7 @@ namespace Kamek
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
             uint? baseAddress = null;
-            string outputKamekPath = null, outputRiivPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
+            string outputKamekPath = null, inputRiivPath = null, outputRiivPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
             string inputDolPath = null, outputDolPath = null;
             string outputMapPath = null;
             var externals = new Dictionary<string, uint>();
@@ -56,6 +56,8 @@ namespace Kamek
                         baseAddress = uint.Parse(arg.Substring(10), System.Globalization.NumberStyles.HexNumber);
                     else if (arg.StartsWith("-output-kamek="))
                         outputKamekPath = arg.Substring(14);
+                    else if (arg.StartsWith("-input-riiv="))
+                        inputRiivPath = arg.Substring(12);
                     else if (arg.StartsWith("-output-riiv="))
                         outputRiivPath = arg.Substring(13);
                     else if (arg.StartsWith("-output-dolphin="))
@@ -170,7 +172,12 @@ namespace Kamek
                 if (outputKamekPath != null)
                     File.WriteAllBytes(outputKamekPath.Replace("$KV$", version.Key), kf.Pack());
                 if (outputRiivPath != null)
-                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution(valuefilePath));
+                {
+                    string inputRiivData = null;
+                    if (inputRiivPath != null)
+                        inputRiivData = File.ReadAllText(inputRiivPath.Replace("$KV$", version.Key));
+                    File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution(inputRiivData, valuefilePath));
+                }
                 if (outputDolphinPath != null)
                     File.WriteAllText(outputDolphinPath.Replace("$KV$", version.Key), kf.PackDolphin());
                 if (outputGeckoPath != null)
