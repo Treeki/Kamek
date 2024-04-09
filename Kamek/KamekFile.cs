@@ -208,38 +208,10 @@ namespace Kamek
             foreach (var pair in _commands)
                 elements.Add(pair.Value.PackForRiivolution());
 
-            if (template == null)
-            {
-                return string.Join("\n", elements);
-            }
-            else
-            {
-                int placeholderIndex = template.IndexOf("$KX$");
-                if (placeholderIndex == -1)
-                    throw new InvalidDataException("\"$KX$\" placeholder not found in Riivolution XML template");
-                if (template.IndexOf("$KX$", placeholderIndex + 1) != -1)
-                    throw new InvalidDataException("multiple \"$KX$\" placeholders found in Riivolution XML template");
-
-                // If the line containing $KX$ has only whitespace before it,
-                // we can use that as indentation for all of our XML lines.
-                // Otherwise, be conservative and don't do that.
-
-                int placeholderLineStartIndex = template.LastIndexOf('\n', placeholderIndex) + 1;
-                string placeholderLineStart = template.Substring(
-                    placeholderLineStartIndex,
-                    placeholderIndex - placeholderLineStartIndex);
-
-                var joinString = "\n";
-                if (placeholderLineStart.All(char.IsWhiteSpace))
-                {
-                    joinString = "\n" + placeholderLineStart;
-                }
-
-                return template.Replace("$KX$", string.Join(joinString, elements));
-            }
+            return InjectLinesIntoTemplate(template, elements.ToArray(), "Riivolution XML");
         }
 
-        public string PackDolphin()
+        public string PackDolphin(string template)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary as a Dolphin patch");
@@ -281,7 +253,7 @@ namespace Kamek
             foreach (var pair in _commands)
                 elements.Add(pair.Value.PackForDolphin());
 
-            return string.Join("\n", elements);
+            return InjectLinesIntoTemplate(template, elements.ToArray(), "Dolphin INI");
         }
 
         public string PackGeckoCodes()
@@ -390,6 +362,39 @@ namespace Kamek
             // apply all patches
             foreach (var pair in _commands)
                 pair.Value.ApplyToDol(dol);
+        }
+
+        private static string InjectLinesIntoTemplate(string template, string[] lines, string formatName)
+        {
+            if (template == null)
+            {
+                return string.Join("\n", lines);
+            }
+            else
+            {
+                int placeholderIndex = template.IndexOf("$KX$");
+                if (placeholderIndex == -1)
+                    throw new InvalidDataException(string.Format("\"$KX$\" placeholder not found in {0} template", formatName));
+                if (template.IndexOf("$KX$", placeholderIndex + 1) != -1)
+                    throw new InvalidDataException(string.Format("multiple \"$KX$\" placeholders found in {0} template", formatName));
+
+                // If the line containing $KX$ has only whitespace before it,
+                // we can use that as indentation for all of our new lines.
+                // Otherwise, be conservative and don't do that.
+
+                int placeholderLineStartIndex = template.LastIndexOf('\n', placeholderIndex) + 1;
+                string placeholderLineStart = template.Substring(
+                    placeholderLineStartIndex,
+                    placeholderIndex - placeholderLineStartIndex);
+
+                var joinString = "\n";
+                if (placeholderLineStart.All(char.IsWhiteSpace))
+                {
+                    joinString = "\n" + placeholderLineStart;
+                }
+
+                return template.Replace("$KX$", string.Join(joinString, lines));
+            }
         }
     }
 }

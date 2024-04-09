@@ -33,13 +33,13 @@ namespace Kamek
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
             uint? baseAddress = null;
-            string outputKamekPath = null, inputRiivPath = null, outputRiivPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
+            string outputKamekPath = null, inputRiivPath = null, outputRiivPath = null, inputDolphinPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
             string inputDolPath = null, outputDolPath = null;
             string outputMapPath = null;
             var externals = new Dictionary<string, uint>();
             VersionInfo versions = null;
             var selectedVersions = new List<String>();
-			string valuefilePath = null;
+            string valuefilePath = null;
 
             foreach (var arg in args)
             {
@@ -60,6 +60,8 @@ namespace Kamek
                         inputRiivPath = arg.Substring(12);
                     else if (arg.StartsWith("-output-riiv="))
                         outputRiivPath = arg.Substring(13);
+                    else if (arg.StartsWith("-input-dolphin="))
+                        inputDolphinPath = arg.Substring(15);
                     else if (arg.StartsWith("-output-dolphin="))
                         outputDolphinPath = arg.Substring(16);
                     else if (arg.StartsWith("-output-gecko="))
@@ -142,9 +144,15 @@ namespace Kamek
                     return;
                 }
             }
-			
-			if (valuefilePath != null && outputRiivPath == null)
-				Console.WriteLine("warning: -valuefile can only be used with -output-riiv");
+
+            if (inputRiivPath != null && outputRiivPath == null)
+                Console.WriteLine("warning: -input-riiv can only be used with -output-riiv");
+
+            if (inputDolphinPath != null && outputDolphinPath == null)
+                Console.WriteLine("warning: -input-dolphin can only be used with -output-dolphin");
+
+            if (valuefilePath != null && outputRiivPath == null)
+                Console.WriteLine("warning: -valuefile can only be used with -output-riiv");
 
 
             foreach (var version in versions.Mappers)
@@ -179,7 +187,12 @@ namespace Kamek
                     File.WriteAllText(outputRiivPath.Replace("$KV$", version.Key), kf.PackRiivolution(inputRiivData, valuefilePath));
                 }
                 if (outputDolphinPath != null)
-                    File.WriteAllText(outputDolphinPath.Replace("$KV$", version.Key), kf.PackDolphin());
+                {
+                    string inputDolphinData = null;
+                    if (inputDolphinPath != null)
+                        inputDolphinData = File.ReadAllText(inputDolphinPath.Replace("$KV$", version.Key));
+                    File.WriteAllText(outputDolphinPath.Replace("$KV$", version.Key), kf.PackDolphin(inputDolphinData));
+                }
                 if (outputGeckoPath != null)
                     File.WriteAllText(outputGeckoPath.Replace("$KV$", version.Key), kf.PackGeckoCodes());
                 if (outputARPath != null)
@@ -260,9 +273,9 @@ namespace Kamek
             Console.WriteLine("    -output-kamek=file.$KV$.bin");
             Console.WriteLine("      write a Kamek binary to for use with the loader (-dynamic only)");
             Console.WriteLine("    -output-riiv=file.$KV$.xml");
-            Console.WriteLine("      write a Riivolution XML fragment (-static only)");
+            Console.WriteLine("      write a Riivolution XML fragment or file (-static only)");
             Console.WriteLine("    -output-dolphin=file.$KV$.ini");
-            Console.WriteLine("      write a Dolphin INI fragment (-static only)");
+            Console.WriteLine("      write a Dolphin INI fragment or file (-static only)");
             Console.WriteLine("    -output-gecko=file.$KV$.xml");
             Console.WriteLine("      write a list of Gecko codes (-static only)");
             Console.WriteLine("    -output-ar=file.$KV$.xml");
@@ -273,8 +286,16 @@ namespace Kamek
             Console.WriteLine("      write the combined code+data segment to file.bin (for manual injection or debugging)");
             Console.WriteLine("    -output-map=file.$KV$.map");
             Console.WriteLine("      write a list of symbols and their relative offsets (for debugging)");
-			Console.WriteLine();
-			Console.WriteLine("  Output Configuration:");
+            Console.WriteLine();
+            Console.WriteLine("  Output Configuration:");
+            Console.WriteLine("    -input-riiv=file.$KV$.xml");
+            Console.WriteLine("      if -output-riiv is used, use this file as a template, where");
+            Console.WriteLine("      the magic string \"$KX$\" will be replaced by the new XML tags.");
+            Console.WriteLine("      otherwise, the new XML tags will be emitted by themselves");
+            Console.WriteLine("    -input-dolphin=file.$KV$.ini");
+            Console.WriteLine("      if -output-dolphin is used, use this file as a template, where");
+            Console.WriteLine("      the magic string \"$KX$\" will be replaced by the new INI lines.");
+            Console.WriteLine("      otherwise, the new INI lines will be emitted by themselves");
             Console.WriteLine("    -valuefile=loader.bin");
             Console.WriteLine("      if -output-riiv is used, emit a \"valuefile\" attribute containing this path string, instead of \"value\"");
         }
