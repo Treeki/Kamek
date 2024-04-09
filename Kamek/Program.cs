@@ -240,7 +240,7 @@ namespace Kamek
 			Console.WriteLine();
 			Console.WriteLine("  Output Configuration:");
             Console.WriteLine("    -use-valuefile");
-            Console.WriteLine("      if -output-riiv and -output-code are both used, emit a <valuefile> tag in the XML fragment");
+            Console.WriteLine("      if -output-riiv and -output-code are both used, emit a \"valuefile\" attribute in the XML fragment");
         }
     }
 }
