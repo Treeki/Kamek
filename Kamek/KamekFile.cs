@@ -181,7 +181,7 @@ namespace Kamek
             }
         }
 
-        public string PackRiivolution(bool useValuefile, string outputCodePath)
+        public string PackRiivolution(string valuefilePath)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary as a Riivolution patch");
@@ -191,8 +191,8 @@ namespace Kamek
             if (_codeBlob.Length > 0)
             {
                 // add the big patch
-                if (useValuefile && outputCodePath != null)
-					elements.Add(string.Format("<memory offset=\"0x{0:X8}\" valuefile=\"{1}\" />", _baseAddress.Value, outputCodePath));
+                if (valuefilePath != null)
+					elements.Add(string.Format("<memory offset=\"0x{0:X8}\" valuefile=\"{1}\" />", _baseAddress.Value, valuefilePath));
 					
 				else
 				{
