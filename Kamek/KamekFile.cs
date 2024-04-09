@@ -192,7 +192,7 @@ namespace Kamek
             {
                 // add the big patch
                 if (useValuefile && outputCodePath != null)
-					elements.Add(string.Format("<memory offset=\"0x{0:X8}\" value=\"{1}\" />", _baseAddress.Value, outputCodePath));
+					elements.Add(string.Format("<memory offset=\"0x{0:X8}\" valuefile=\"{1}\" />", _baseAddress.Value, outputCodePath));
 					
 				else
 				{
