@@ -181,7 +181,7 @@ namespace Kamek
             }
         }
 
-        public string PackRiivolution(string valuefilePath)
+        public string PackRiivolution(string template, string valuefilePath)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary as a Riivolution patch");
@@ -208,10 +208,10 @@ namespace Kamek
             foreach (var pair in _commands)
                 elements.Add(pair.Value.PackForRiivolution());
 
-            return string.Join("\n", elements);
+            return InjectLinesIntoTemplate(template, elements.ToArray(), "Riivolution XML");
         }
 
-        public string PackDolphin()
+        public string PackDolphin(string template)
         {
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary as a Dolphin patch");
@@ -253,7 +253,7 @@ namespace Kamek
             foreach (var pair in _commands)
                 elements.Add(pair.Value.PackForDolphin());
 
-            return string.Join("\n", elements);
+            return InjectLinesIntoTemplate(template, elements.ToArray(), "Dolphin INI");
         }
 
         public string PackGeckoCodes()
@@ -362,6 +362,39 @@ namespace Kamek
             // apply all patches
             foreach (var pair in _commands)
                 pair.Value.ApplyToDol(dol);
+        }
+
+        private static string InjectLinesIntoTemplate(string template, string[] lines, string formatName)
+        {
+            if (template == null)
+            {
+                return string.Join("\n", lines);
+            }
+            else
+            {
+                int placeholderIndex = template.IndexOf("$KF$");
+                if (placeholderIndex == -1)
+                    throw new InvalidDataException(string.Format("\"$KF$\" placeholder not found in {0} template", formatName));
+                if (template.IndexOf("$KF$", placeholderIndex + 1) != -1)
+                    throw new InvalidDataException(string.Format("multiple \"$KF$\" placeholders found in {0} template", formatName));
+
+                // If the line containing $KF$ has only whitespace before it,
+                // we can use that as indentation for all of our new lines.
+                // Otherwise, be conservative and don't do that.
+
+                int placeholderLineStartIndex = template.LastIndexOf('\n', placeholderIndex) + 1;
+                string placeholderLineStart = template.Substring(
+                    placeholderLineStartIndex,
+                    placeholderIndex - placeholderLineStartIndex);
+
+                var joinString = "\n";
+                if (placeholderLineStart.All(char.IsWhiteSpace))
+                {
+                    joinString = "\n" + placeholderLineStart;
+                }
+
+                return template.Replace("$KF$", string.Join(joinString, lines));
+            }
         }
     }
 }
