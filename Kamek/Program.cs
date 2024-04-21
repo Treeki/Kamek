@@ -293,7 +293,7 @@ namespace Kamek
             Console.WriteLine();
             Console.WriteLine("  Outputs (at least one is required; $KV$ will be replaced with the version name):");
             Console.WriteLine("    -output-kamek=file.$KV$.bin");
-            Console.WriteLine("      write a Kamek binary to for use with the loader (-dynamic only)");
+            Console.WriteLine("      write a Kamek binary for use with the loader (-dynamic only)");
             Console.WriteLine("    -output-riiv=file.$KV$.xml");
             Console.WriteLine("      write a Riivolution XML fragment or file (-static only)");
             Console.WriteLine("    -output-dolphin=file.$KV$.ini");
