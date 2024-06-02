@@ -6,6 +6,7 @@ kmCondWritePointer(0x80328130, 0x8015BB20, loadIntoNSMBW); // US
 kmCondWritePointer(0x80327E98, 0x8015B930, loadIntoNSMBW); // JP
 kmCondWritePointer(0x80334E60, 0x8015C060, loadIntoNSMBW); // KR
 kmCondWritePointer(0x80333218, 0x8015C060, loadIntoNSMBW); // TW
+kmCondWritePointer(0x8032D348, 0x8015CF30, loadIntoNSMBW); // CN
 
 typedef void *(*EGG_Heap_Alloc_t) (u32 size, s32 align, void *heap);
 typedef void (*EGG_Heap_Free_t) (void *buffer, void *heap);
@@ -105,6 +106,21 @@ const loaderFunctionsEx functions_w = {
 	(void **) 0x80382D48,
 	(void **) 0x804354EC
 };
+const loaderFunctionsEx functions_c = {
+	{(OSReport_t) 0x80161A90,
+	(OSFatal_t) 0x801B1930,
+	(DVDConvertPathToEntrynum_t) 0x801CC9E0,
+	(DVDFastOpen_t) 0x801CCCF0,
+	(DVDReadPrio_t) 0x801CCE80,
+	(DVDClose_t) 0x801CCD60,
+	(sprintf_t) 0x802E4DF8,
+	allocAdapter,
+	freeAdapter},
+	(EGG_Heap_Alloc_t) 0x802BB360,
+	(EGG_Heap_Free_t) 0x802BB610,
+	(void **) 0x8037D4C8,
+	(void **) 0x8042FCCC
+};
 
 void unknownVersion()
 {
@@ -138,6 +154,7 @@ int loadIntoNSMBW()
 				default: unknownVersion();
 			}
 			break;
+		case 0x4182000C: region = 'C'; break;
 		default: unknownVersion();
 	}
 
@@ -152,6 +169,7 @@ int loadIntoNSMBW()
 		case 'J': funcs = &functions_j.base; break;
 		case 'K': funcs = &functions_k.base; break;
 		case 'W': funcs = &functions_w.base; break;
+		case 'C': funcs = &functions_c.base; break;
 	}
 
 	char path[64];
