@@ -222,7 +222,8 @@ namespace Kamek
                         dol.Write(outStream);
                     }
                 }
-                else if (outputAlfPath != null)
+
+                if (outputAlfPath != null)
                 {
                     var alf = new CodeFiles.Alf(new FileStream(inputAlfPath.Replace("$KV$", version.Key), FileMode.Open, FileAccess.ReadWrite, FileShare.None));
                     kf.InjectIntoAlf(alf);
