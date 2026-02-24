@@ -37,6 +37,7 @@ By default, it loads a Kamekfile from one of the following paths on the disc / i
 - *Code/J2.bin* (Japanese: SMNJ v2)
 - *Code/K.bin* (South Korean: SMNK)
 - *Code/W.bin* (Taiwanese / Hong Kong: SMNW)
+- *Code/C.bin* (Chinese / NVIDIA Shield: SMNC)
 
 ### Building the bootstrap and loader
 
