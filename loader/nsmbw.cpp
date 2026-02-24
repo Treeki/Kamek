@@ -1,5 +1,7 @@
 #include "kamekLoader.h"
 
+// based on the "First Stage Loader" by CLF78
+
 typedef void *(*EGG_Heap_Alloc_t) (u32 size, s32 align, void *heap);
 typedef void (*EGG_Heap_Free_t) (void *buffer, void *heap);
 typedef void *(*memcpy_t) (void *dest, const void *src, size_t count);
