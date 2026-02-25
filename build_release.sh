@@ -1,4 +1,11 @@
 #!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: $0 <RID>" >&2
+    echo "(see here for RIDs: https://learn.microsoft.com/en-us/dotnet/core/rid-catalog#known-rids)" >&2
+    exit 1
+fi
+
 ROOT="$(pwd)"
 RID="$1"
 rm -rf release
