@@ -27,6 +27,13 @@
 #define kmHookInt(counter) \
 	__declspec (section ".kamek") static const unsigned int kmIdentifier(Hook, counter)
 
+struct _kmHook_4ui_1f_t { unsigned int a; unsigned int b; unsigned int c; unsigned int d; float e; };
+#define _kmHook_4ui_1f(counter) \
+	__declspec (section ".kamek") static const _kmHook_4ui_1f_t kmIdentifier(Hook, counter)
+struct _kmHook_4ui_2f_t { unsigned int a; unsigned int b; unsigned int c; unsigned int d; float e; float f; };
+#define _kmHook_4ui_2f(counter) \
+	__declspec (section ".kamek") static const _kmHook_4ui_2f_t kmIdentifier(Hook, counter)
+
 // general hook definition macros
 // TODO: debugging data (file, line, ...) for diagnostic use by Kamek maybe? :3
 #define kmHook0(type) \
@@ -40,12 +47,18 @@
 #define kmHook4(type, arg0, arg1, arg2, arg3) \
 	kmHookInt(__COUNTER__)[6] = { 4, (type), (unsigned int)(arg0), (unsigned int)(arg1), (unsigned int)(arg2), (unsigned int)(arg3) }
 
+#define kmHook_2ui_1f(type, arg0, arg1, arg2) \
+	_kmHook_4ui_1f(__COUNTER__) = { 3, (type), (unsigned int)(arg0), (unsigned int)(arg1), (float)(arg2) }
+#define kmHook_2ui_2f(type, arg0, arg1, arg2, arg3) \
+	_kmHook_4ui_2f(__COUNTER__) = { 4, (type), (unsigned int)(arg0), (unsigned int)(arg1), (float)(arg2), (float)(arg3) }
+
 // kmCondWrite
 //   Write value to address, conditionally
 #define kmCondWritePointer(addr, original, value) kmHook4(kctConditionalWrite, 1, (addr), (value), (original))
 #define kmCondWrite32(addr, original, value) kmHook4(kctConditionalWrite, 2, (addr), (value), (original))
 #define kmCondWrite16(addr, original, value) kmHook4(kctConditionalWrite, 3, (addr), (value), (original))
 #define kmCondWrite8(addr, original, value) kmHook4(kctConditionalWrite, 4, (addr), (value), (original))
+#define kmCondWriteFloat(addr, original, value) kmHook_2ui_2f(kctConditionalWrite, 2, (addr), (value), (original))
 
 // kmWrite
 //   Write value to address
@@ -53,6 +66,7 @@
 #define kmWrite32(addr, value) kmHook3(kctWrite, 2, (addr), (value))
 #define kmWrite16(addr, value) kmHook3(kctWrite, 3, (addr), (value))
 #define kmWrite8(addr, value) kmHook3(kctWrite, 4, (addr), (value))
+#define kmWriteFloat(addr, value) kmHook_2ui_1f(kctWrite, 2, (addr), (value))
 
 // kmPatchExitPoint
 //   Force the end of a Kamek function to always jump to a specific address
