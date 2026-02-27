@@ -1,0 +1,234 @@
+//------------------------------------------------
+//--- 010 Editor v16.0.3 Binary Template
+//
+//      File: kamekfile.bt
+//   Authors: RoadrunnerWMC
+//   Version: 0.1
+//   Purpose: Parse Kamek binary files ("Kamekfiles").
+//  Category: Game
+// File Mask: *.bin
+//  ID Bytes: 4B 61 6D 65 6B 00 00
+//   History:
+//------------------------------------------------
+
+
+string formatHex(uint64 value) {
+    return Str("0x%x", value);
+}
+
+
+typedef struct {
+    uint8 b1;
+    uint8 b2;
+    uint8 b3;
+} uint24 <read=formatHex(readUint24(this)), open=suppress>;
+
+uint32 readUint24(uint24 &value) {
+    return ((uint32)value.b1 << 16) | ((uint32)value.b2 << 8) | (uint32)value.b3;
+}
+
+
+BigEndian();
+
+
+uint64 first8 <hidden=true>;
+local int version;
+if (first8 == 0x4b616d656b000001) {  // "Kamek", version 1
+    version = 1;
+} else if (first8 == 0x4b616d656b000002) {  // "Kamek", version 2
+    version = 2;
+} else {
+    Warning("Not a Kamekfile.");
+    return;
+}
+FSeek(0);
+
+
+enum <uint8> CommandType {
+    kAddr32 = 1,
+    kAddr16Lo = 4,
+    kAddr16Hi = 5,
+    kAddr16Ha = 6,
+    kRel24 = 10,
+    kWrite32 = 32,
+    kWrite16 = 33,
+    kWrite8 = 34,
+    kCondWritePointer = 35,
+    kCondWrite32 = 36,
+    kCondWrite16 = 37,
+    kCondWrite8 = 38,
+    kBranch = 64,
+    kBranchLink = 65,
+};
+
+
+typedef struct {
+    /* 0x00 */ char magic[6] <name="Magic", comment="Always \"Kamek\\0\"">;
+    /* 0x06 */ uint16 version <name="Version">;
+    /* 0x08 */ uint32 bssSize <name=".bss Size", read=formatHex>;
+    /* 0x0c */ uint32 codeSize <name="Code Size", read=formatHex>;
+    if (version >= 2) {
+        /* 0x10 */ uint32 ctorStart <name=".ctors Start", read=formatHex>;
+        /* 0x14 */ uint32 ctorEnd <name=".ctors End", read=formatHex>;
+        /* 0x18 */ FSkip(8);
+    }
+} Header;
+
+/* 0x00 */ Header header <name="Header">;
+
+
+byte code[header.codeSize] <name="Code", open=suppress>;
+
+
+typedef struct {
+    uint16 a <hidden=true>;
+    uint8 b <hidden=true>;
+    local int isAbsolute = (a == 0xffff && b == 0xfe);
+    FSkip(-3);
+
+    if (isAbsolute) {
+        /* 0x00 */ uint24 sentinel <name="Sentinel Value", comment="0xfffffe to indicate an absolute address">;
+        /* 0x03 */ uint32 absAddr <name="Absolute Address", read=formatHex>;
+    } else {
+        /* 0x00 */ uint24 relAddr <name="Relative Address", read=formatHex(readUint24(this))>;
+    }
+} DestAddress <read=readDestAddress>;
+
+string readDestAddress(DestAddress &value) {
+    if (value.isAbsolute) {
+        return Str("0x%x", value.absAddr);
+    } else {
+        return Str("<code+0x%x>", readUint24(value.relAddr));
+    }
+}
+
+
+typedef uint32 SrcAddress;
+
+string readSrcAddress(SrcAddress value, CommandType type) {
+    local int isAbsolute = (value >> 31 == 1);
+
+    local string s = formatHex(value);
+    if (!isAbsolute) {
+        s = Str("<code+%s>", s);
+    }
+
+    switch (type) {
+    case kAddr16Lo:
+        s = Str("%s@lo", s); break;
+    case kAddr16Hi:
+        s = Str("%s@hi", s); break;
+    case kAddr16Ha:
+        s = Str("%s@ha", s); break;
+    case kRel24:
+        s = Str("%s@rel24", s); break;
+    default: break;
+    }
+
+    return s;
+}
+
+
+typedef struct {
+    /* 0x00 */ CommandType type <name="Type">;
+    /* 0x01 */ DestAddress dest <name="Dest. Address">;
+
+    local string valueStr = "";
+    switch (type) {
+    case kAddr32:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kAddr32)>;
+        valueStr = Str("kmWritePointer(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kAddr32));
+        break;
+    case kAddr16Lo:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kAddr16Lo)>;
+        valueStr = Str("kmWritePointer@lo(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kAddr16Lo));
+        break;
+    case kAddr16Hi:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kAddr16Hi)>;
+        valueStr = Str("kmWritePointer@hi(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kAddr16Hi));
+        break;
+    case kAddr16Ha:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kAddr16Ha)>;
+        valueStr = Str("kmWritePointer@ha(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kAddr16Ha));
+        break;
+    case kRel24:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kRel24)>;
+        valueStr = Str("kmWritePointer@rel24(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kRel24));
+        break;
+    case kWrite32:
+        uint32 value <name="Value", read=formatHex>;
+        valueStr = Str("kmWrite32(%s, %s)",
+            readDestAddress(dest), formatHex(value));
+        break;
+    case kWrite16:
+        FSkip(2);
+        uint16 value <name="Value", read=formatHex>;
+        valueStr = Str("kmWrite16(%s, %s)",
+            readDestAddress(dest), formatHex(value));
+        break;
+    case kWrite8:
+        FSkip(3);
+        uint8 value <name="Value", read=formatHex>;
+        valueStr = Str("kmWrite8(%s, %s)",
+            readDestAddress(dest), formatHex(value));
+        break;
+    case kCondWritePointer:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kCondWritePointer)>;
+        uint32 original <name="Original", read=formatHex>;
+        valueStr = Str("kmCondWritePointer(%s, %s, %s)",
+            readDestAddress(dest), formatHex(original), readSrcAddress(src, kCondWritePointer));
+        break;
+    case kCondWrite32:
+        uint32 value <name="Value", read=formatHex>;
+        uint32 original <name="Original", read=formatHex>;
+        valueStr = Str("kmCondWrite32(%s, %s, %s)",
+            readDestAddress(dest), formatHex(original), formatHex(value));
+        break;
+    case kCondWrite16:
+        FSkip(2);
+        uint16 value <name="Value", read=formatHex>;
+        FSkip(2);
+        uint16 original <name="Original", read=formatHex>;
+        valueStr = Str("kmCondWrite16(%s, %s, %s)",
+            readDestAddress(dest), formatHex(original), formatHex(value));
+        break;
+    case kCondWrite8:
+        FSkip(3);
+        uint8 value <name="Value", read=formatHex>;
+        FSkip(3);
+        uint8 original <name="Original", read=formatHex>;
+        valueStr = Str("kmCondWrite8(%s, %s, %s)",
+            readDestAddress(dest), formatHex(original), formatHex(value));
+        break;
+    case kBranch:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kRel24)>;
+        // intentionally using kAddr32 instead of kRel24 below
+        valueStr = Str("kmBranch(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kAddr32));
+        break;
+    case kBranchLink:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kRel24)>;
+        // intentionally using kAddr32 instead of kRel24 below
+        valueStr = Str("kmCall(%s, %s)",
+            readDestAddress(dest), readSrcAddress(src, kAddr32));
+        break;
+    default:
+        break;
+    }
+} Command <read=valueStr>;
+
+
+typedef struct {
+    local int count = 0;
+    while (FTell() < FileSize()) {
+        Command commands;
+        count += 1;
+    }
+} Commands <read=Str("%d commands", count)>;
+
+Commands commands <name="Commands">;
