@@ -82,6 +82,9 @@ kmCondWrite8: .macro addr, original, value
 kmCondWriteFloat: .macro addr, original, value
 	kmHook_2ui_2f kctConditionalWrite, 4, addr, value, original
 	.endm
+kmCondWriteNop: .macro addr, original
+	kmCondWrite32 addr, original, 0x60000000
+	.endm
 
 // kmWrite
 //   Write value to address

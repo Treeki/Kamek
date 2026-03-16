@@ -59,6 +59,7 @@ struct _kmHook_4ui_2f_t { unsigned int a; unsigned int b; unsigned int c; unsign
 #define kmCondWrite16(addr, original, value) kmHook4(kctConditionalWrite, 3, (addr), (value), (original))
 #define kmCondWrite8(addr, original, value) kmHook4(kctConditionalWrite, 4, (addr), (value), (original))
 #define kmCondWriteFloat(addr, original, value) kmHook_2ui_2f(kctConditionalWrite, 2, (addr), (value), (original))
+#define kmCondWriteNop(addr, original) kmCondWrite32((addr), (original), 0x60000000)
 
 // kmWrite
 //   Write value to address
