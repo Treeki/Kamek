@@ -122,12 +122,27 @@ namespace Kamek.Commands
 
             string ret = null;
 
-            switch (ValueType)
+            if (Original.HasValue)
             {
-                case Type.Value8: ret = string.Format("0x{0:X8}:byte:0x000000{1:X2}", Address.Value.Value, Value.Value); break;
-                case Type.Value16: ret = string.Format("0x{0:X8}:word:0x0000{1:X4}", Address.Value.Value, Value.Value); break;
-                case Type.Value32:
-                case Type.Pointer: ret = string.Format("0x{0:X8}:dword:0x{1:X8}", Address.Value.Value, Value.Value); break;
+                Original.Value.AssertNotRelative();
+
+                switch (ValueType)
+                {
+                    case Type.Value8: ret = string.Format("0x{0:X8}:byte:0x000000{1:X2}:0x000000{2:X2}", Address.Value.Value, Value.Value, Original.Value.Value); break;
+                    case Type.Value16: ret = string.Format("0x{0:X8}:word:0x0000{1:X4}:0x0000{2:X4}", Address.Value.Value, Value.Value, Original.Value.Value); break;
+                    case Type.Value32:
+                    case Type.Pointer: ret = string.Format("0x{0:X8}:dword:0x{1:X8}:0x{2:X8}", Address.Value.Value, Value.Value, Original.Value.Value); break;
+                }
+            }
+            else
+            {
+                switch (ValueType)
+                {
+                    case Type.Value8: ret = string.Format("0x{0:X8}:byte:0x000000{1:X2}", Address.Value.Value, Value.Value); break;
+                    case Type.Value16: ret = string.Format("0x{0:X8}:word:0x0000{1:X4}", Address.Value.Value, Value.Value); break;
+                    case Type.Value32:
+                    case Type.Pointer: ret = string.Format("0x{0:X8}:dword:0x{1:X8}", Address.Value.Value, Value.Value); break;
+                }
             }
 
             if (ret == null)
