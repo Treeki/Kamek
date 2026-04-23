@@ -77,7 +77,8 @@ typedef struct {
 /* 0x00 */ Header header <name="Header">;
 
 
-byte code[header.codeSize] <name="Code", open=suppress>;
+DisasmSetMode(DISASM_POWERPC_32);
+Opcode code[header.codeSize] <name="Code", open=suppress>;
 
 
 typedef struct {
