@@ -35,6 +35,12 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+Kamek.deps.json
+Kamek.dll
+Kamek.dll.config
+Kamek.exe
+Kamek
+Kamek.runtimeconfig.json
 
 # Roslyn cache directories
 *.ide/
