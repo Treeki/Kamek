@@ -12,7 +12,9 @@ namespace Kamek.Hooks
         kctConditionalWrite = 2,
         kctInjectBranch = 3,
         kctInjectCall = 4,
-        kctPatchExit = 5
+        kctPatchExit = 5,
+        kctConditionalInjectBranch = 6,
+        kctConditionalInjectCall = 7
     }
 
     abstract class Hook
@@ -26,9 +28,13 @@ namespace Kamek.Hooks
                 case (uint)HookType.kctConditionalWrite:
                     return new WriteHook(true, data.args, mapper);
                 case (uint)HookType.kctInjectBranch:
-                    return new BranchHook(false, data.args, mapper);
+                    return new BranchHook(false, false, data.args, mapper);
                 case (uint)HookType.kctInjectCall:
-                    return new BranchHook(true, data.args, mapper);
+                    return new BranchHook(true, false, data.args, mapper);
+                case (uint)HookType.kctConditionalInjectBranch:
+                    return new BranchHook(false, true, data.args, mapper);
+                case (uint)HookType.kctConditionalInjectCall:
+                    return new BranchHook(true, true, data.args, mapper);
                 case (uint)HookType.kctPatchExit:
                     return new PatchExitHook(data.args, mapper);
                 default:

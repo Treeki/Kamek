@@ -37,6 +37,8 @@ if (first8 == 0x4b616d656b000001) {  // "Kamek", version 1
     version = 1;
 } else if (first8 == 0x4b616d656b000002) {  // "Kamek", version 2
     version = 2;
+} else if (first8 == 0x4b616d656b000003) {  // "Kamek", version 3
+    version = 3;
 } else {
     Warning("Not a Kamekfile.");
     return;
@@ -59,6 +61,8 @@ enum <uint8> CommandType {
     kCondWrite8 = 38,
     kBranch = 64,
     kBranchLink = 65,
+    kCondBranch = 66,  // added in version >= 3
+    kCondBranchLink = 67,  // added in version >= 3
 };
 
 
@@ -217,6 +221,20 @@ typedef struct {
         // intentionally using kAddr32 instead of kRel24 below
         valueStr = Str("kmCall(%s, %s)",
             readDestAddress(dest), readSrcAddress(src, kAddr32));
+        break;
+    case kCondBranch:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kRel24)>;
+        uint32 original <name="Original", read=formatHex>;
+        // intentionally using kAddr32 instead of kRel24 below
+        valueStr = Str("kmCondBranch(%s, %s, %s)",
+            readDestAddress(dest), formatHex(original), readSrcAddress(src, kAddr32));
+        break;
+    case kCondBranchLink:
+        SrcAddress src <name="Src. Address", read=readSrcAddress(this, kRel24)>;
+        uint32 original <name="Original", read=formatHex>;
+        // intentionally using kAddr32 instead of kRel24 below
+        valueStr = Str("kmCondCall(%s, %s, %s)",
+            readDestAddress(dest), formatHex(original), readSrcAddress(src, kAddr32));
         break;
     default:
         break;
