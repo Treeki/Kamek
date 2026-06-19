@@ -1,0 +1,2 @@
+externalSym1=0x81001234
+externalSym2=0x8100f234
