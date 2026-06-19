@@ -62,7 +62,6 @@ namespace Kamek
         private Word _dataStart, _dataEnd;
         private Word _outputStart, _outputEnd;
         private Word _bssStart, _bssEnd;
-        private Word _kamekStart, _kamekEnd;
         private byte[] _memory = null;
 
         public Word BaseAddress { get { return _baseAddress; } }
@@ -74,8 +73,109 @@ namespace Kamek
         public long BssSize { get { return _bssEnd - _bssStart; } }
 
 
-        #region Collecting Sections
+        #region Collecting Injection Sections
+
+        [Flags]
+        public enum InjectionFlags : uint
+        {
+            KM_INJECT_STRIP_BLR_PAST = 1,
+            KM_INJECT_ADD_PADDING = 2
+        }
+
+        public struct InjectedSection
+        {
+            public uint Address;
+            public byte[] Data;
+        }
+
+        private List<InjectedSection> _injectedSections = new List<InjectedSection>();
+        public IReadOnlyList<InjectedSection> InjectedSections { get { return _injectedSections; } }
+
+        private void ImportInjectedSections()
+        {
+            foreach (var elf in _modules)
+            {
+                foreach (var injectionSection in (from s in elf.Sections
+                                                  where s.name.StartsWith(".km_inject_") && !s.name.EndsWith("_meta")
+                                                  select s))
+                {
+                    Elf.ElfSection metaSection = (from s in elf.Sections
+                                                  where s.name == $"{injectionSection.name}_meta"
+                                                  select s).Single();
+
+                    var numValues = Util.ExtractUInt32(metaSection.data, 0);
+                    if (numValues < 4)
+                        continue;
+
+                    var startAddr = Util.ExtractUInt32(metaSection.data, 4);
+                    var endAddr = Util.ExtractUInt32(metaSection.data, 8);
+                    var flags = (InjectionFlags)Util.ExtractUInt32(metaSection.data, 12);
+                    var pad = Util.ExtractUInt32(metaSection.data, 16);
+
+                    ProcessSectionInjection(elf, injectionSection, startAddr, endAddr, flags, pad);
+                }
+            }
+        }
+
+        private void ProcessSectionInjection(Elf elf, Elf.ElfSection sec, uint start, uint end, InjectionFlags flags, uint pad)
+        {
+            uint startPreMap = start;
+            uint sizePreMap = end - start;
+
+            start = Mapper.Remap(start);
+            end = Mapper.Remap(end);
+
+            uint sizePostMap = end - start;
+            if (sizePreMap != sizePostMap)
+                throw new InvalidDataException($"Injected code range at 0x{startPreMap:x} changes size when remapped (0x{sizePreMap:x} -> 0x{sizePostMap:x})");
+
+            EnforceSectionInjectionSize(sec, start, end - start + 4, flags, pad);
+
+            _injectedSections.Add(new InjectedSection { Address=start, Data=sec.data });
+            _sectionBases[sec] = new Word(WordType.AbsoluteAddr, start);
+        }
+
+        private void EnforceSectionInjectionSize(Elf.ElfSection sec, uint start, uint requestedSize, InjectionFlags flags, uint pad)
+        {
+            if (sec.sh_size < requestedSize)
+            {
+                // Section data is too short
+
+                if ((flags & InjectionFlags.KM_INJECT_ADD_PADDING) != 0)
+                {
+                    // Pad it with the user-provided pad value
+                    Array.Resize(ref sec.data, (int)requestedSize);
+                    for (uint offs = sec.sh_size; offs < requestedSize; offs += 4)
+                        Util.InjectUInt32(sec.data, offs, pad);
+                    sec.sh_size = requestedSize;
+                }
+            }
+            else if (sec.sh_size > requestedSize)
+            {
+                // Section data is too long
+
+                if ((flags & InjectionFlags.KM_INJECT_STRIP_BLR_PAST) != 0
+                        && sec.sh_size == requestedSize + 4
+                        && Util.ExtractUInt32(sec.data, requestedSize) == 0x4e800020)
+                {
+                    // Section data is too long, but by exactly one "blr" instruction. Instead of
+                    // erroring, make an exception and just trim the blr instead. (This way, users
+                    // don't need to put a "nofralloc" in every single kmWriteDefAsm call.)
+                    Array.Resize(ref sec.data, (int)requestedSize);
+                    sec.sh_size = requestedSize;
+                }
+                else
+                {
+                    throw new InvalidDataException($"Injected code at 0x{start:x} doesn't fit (0x{sec.sh_size:x} > 0x{requestedSize:x})");
+                }
+            }
+        }
+        #endregion
+
+
+        #region Collecting Other Sections
         private Dictionary<Elf.ElfSection, Word> _sectionBases = new Dictionary<Elf.ElfSection, Word>();
+        private List<Elf.ElfSection> _hookSections = new List<Elf.ElfSection>();
 
         private void ImportSections(ref List<byte[]> blobs, ref Word location, string prefix)
         {
@@ -102,6 +202,15 @@ namespace Kamek
                     }
                 }
             }
+        }
+
+        private void ImportHookSections()
+        {
+            foreach (var elf in _modules)
+                foreach (var s in (from s in elf.Sections
+                                   where s.name.StartsWith(".kamek")
+                                   select s))
+                    _hookSections.Add(s);
         }
 
         private void CollectSections()
@@ -144,10 +253,6 @@ namespace Kamek
             ImportSections(ref blobs, ref location, ".bss");
             _bssEnd = location;
 
-            _kamekStart = location;
-            ImportSections(ref blobs, ref location, ".kamek");
-            _kamekEnd = location;
-
             // Create one big blob from this
             _memory = new byte[location - _baseAddress];
             int position = 0;
@@ -156,26 +261,9 @@ namespace Kamek
                 Array.Copy(blob, 0, _memory, position, blob.Length);
                 position += blob.Length;
             }
-        }
-        #endregion
 
-
-        #region Result Binary Manipulation
-        private ushort ReadUInt16(Word addr)
-        {
-            return Util.ExtractUInt16(_memory, addr - _baseAddress);
-        }
-        private uint ReadUInt32(Word addr)
-        {
-            return Util.ExtractUInt32(_memory, addr - _baseAddress);
-        }
-        private void WriteUInt16(Word addr, ushort value)
-        {
-            Util.InjectUInt16(_memory, addr - _baseAddress, value);
-        }
-        private void WriteUInt32(Word addr, uint value)
-        {
-            Util.InjectUInt32(_memory, addr - _baseAddress, value);
+            ImportHookSections();
+            ImportInjectedSections();
         }
         #endregion
 
@@ -194,6 +282,7 @@ namespace Kamek
         }
         private Dictionary<string, Symbol> _globalSymbols = null;
         private Dictionary<Elf, Dictionary<string, Symbol>> _localSymbols = null;
+        private Dictionary<Tuple<Elf.ElfSection, string>, uint> _hookSymbols = null;
         private Dictionary<Elf.ElfSection, SymbolName[]> _symbolTableContents = null;
         private Dictionary<string, uint> _externalSymbols = null;
         private Dictionary<Word, uint> _symbolSizes = null;
@@ -203,6 +292,7 @@ namespace Kamek
         {
             _globalSymbols = new Dictionary<string, Symbol>();
             _localSymbols = new Dictionary<Elf, Dictionary<string, Symbol>>();
+            _hookSymbols = new Dictionary<Tuple<Elf.ElfSection, string>, uint>();
             _symbolTableContents = new Dictionary<Elf.ElfSection, SymbolName[]>();
             _symbolSizes = new Dictionary<Word, uint>();
 
@@ -292,9 +382,15 @@ namespace Kamek
                 {
                     // Part of a section
                     var section = elf.Sections[st_shndx];
-                    if (!_sectionBases.ContainsKey(section))
+                    if (_sectionBases.ContainsKey(section))
+                        addr = _sectionBases[section] + st_value;
+                    else if (_hookSections.Contains(section))
+                    {
+                        _hookSymbols[new Tuple<Elf.ElfSection, string>(section, name)] = st_value;
+                        continue;
+                    }
+                    else
                         continue; // skips past symbols we don't care about, like DWARF junk
-                    addr = _sectionBases[section] + st_value;
                 }
                 else
                     throw new NotImplementedException("unknown section index found in symbol table");
@@ -428,19 +524,24 @@ namespace Kamek
 
                 if (symIndex == 0)
                     throw new InvalidDataException("linking to undefined symbol");
-                if (!_sectionBases.ContainsKey(section))
+
+                Word source;
+                if (_sectionBases.ContainsKey(section))
+                    source = _sectionBases[section] + r_offset;
+                else if (_hookSections.Contains(section))
+                    source = new Word(WordType.Value, r_offset);
+                else
                     continue; // we don't care about this
 
                 SymbolName symbol = _symbolTableContents[symtab][symIndex];
                 string symName = symbol.name;
                 //Console.WriteLine("{0,-30} {1}", symName, reloc);
 
-                Word source = _sectionBases[section] + r_offset;
                 Word dest = (String.IsNullOrEmpty(symName) ? _sectionBases[elf.Sections[symbol.shndx]] : ResolveSymbol(elf, symName).address) + r_addend;
 
                 //Console.WriteLine("Linking from 0x{0:X8} to 0x{1:X8}", source.Value, dest.Value);
 
-                if (!KamekUseReloc(reloc, source, dest))
+                if (!KamekUseReloc(section, reloc, source.Value, dest))
                     _fixups.Add(new Fixup { type = reloc, source = source, dest = dest });
             }
         }
@@ -448,16 +549,16 @@ namespace Kamek
 
 
         #region Kamek Hooks
-        private Dictionary<Word, Word> _kamekRelocations = new Dictionary<Word, Word>();
+        private Dictionary<Tuple<Elf.ElfSection, uint>, Word> _hookRelocations = new Dictionary<Tuple<Elf.ElfSection, uint>, Word>();
 
-        private bool KamekUseReloc(Elf.Reloc type, Word source, Word dest)
+        private bool KamekUseReloc(Elf.ElfSection section, Elf.Reloc type, uint source, Word dest)
         {
-            if (source < _kamekStart || source >= _kamekEnd)
+            if (!_hookSections.Contains(section))
                 return false;
             if (type != Elf.Reloc.R_PPC_ADDR32)
                 throw new InvalidOperationException($"Unsupported relocation type {type} in the Kamek hook data section");
 
-            _kamekRelocations[source] = dest;
+            _hookRelocations[new Tuple<Elf.ElfSection, uint>(section, source)] = dest;
             return true;
         }
 
@@ -473,29 +574,30 @@ namespace Kamek
 
         private void ProcessHooks()
         {
-            foreach (var elf in _modules)
+            foreach (var pair in _hookSymbols)
             {
-                foreach (var pair in _localSymbols[elf])
+                Elf.ElfSection section = pair.Key.Item1;
+                string name = pair.Key.Item2;
+
+                if (name.StartsWith("_kHook"))
                 {
-                    if (pair.Key.StartsWith("_kHook"))
+                    uint cmdOffs = pair.Value;
+
+                    var argCount = Util.ExtractUInt32(section.data, cmdOffs);
+                    var type = Util.ExtractUInt32(section.data, cmdOffs + 4);
+                    var args = new Word[argCount];
+
+                    for (uint i = 0; i < argCount; i++)
                     {
-                        var cmdAddr = pair.Value.address;
-
-                        var argCount = ReadUInt32(cmdAddr);
-                        var type = ReadUInt32(cmdAddr + 4);
-                        var args = new Word[argCount];
-
-                        for (int i = 0; i < argCount; i++)
-                        {
-                            var argAddr = cmdAddr + (8 + (i * 4));
-                            if (_kamekRelocations.ContainsKey(argAddr))
-                                args[i] = _kamekRelocations[argAddr];
-                            else
-                                args[i] = new Word(WordType.Value, ReadUInt32(argAddr));
-                        }
-
-                        _hooks.Add(new HookData { type = type, args = args });
+                        var argOffs = cmdOffs + (8 + (i * 4));
+                        var tuple = new Tuple<Elf.ElfSection, uint>(section, argOffs);
+                        if (_hookRelocations.ContainsKey(tuple))
+                            args[i] = _hookRelocations[tuple];
+                        else
+                            args[i] = new Word(WordType.Value, Util.ExtractUInt32(section.data, argOffs));
                     }
+
+                    _hooks.Add(new HookData { type = type, args = args });
                 }
             }
         }

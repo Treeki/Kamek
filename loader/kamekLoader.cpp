@@ -1,6 +1,6 @@
 #include "kamekLoader.h"
 
-#define KM_FILE_VERSION 2
+#define KM_FILE_VERSION 3
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
 
@@ -37,6 +37,7 @@ struct DVDHandle
 #define kCondWrite32 36
 #define kCondWrite16 37
 #define kCondWrite8 38
+#define kWriteRange 39
 #define kBranch 64
 #define kBranchLink 65
 
@@ -57,9 +58,9 @@ static inline u32 resolveAddress(u32 text, u32 address) {
 
 
 #define kCommandHandler(name) \
-    static inline const u8 *kHandle##name(const u8 *input, u32 text, u32 address)
+    static inline const u8 *kHandle##name(const u8 *input, u32 text, u32 address, const loaderFunctions *funcs)
 #define kDispatchCommand(name) \
-    case k##name: input = kHandle##name(input, text, address); break
+    case k##name: input = kHandle##name(input, text, address, funcs); break
 
 kCommandHandler(Addr32) {
     u32 target = resolveAddress(text, *(const u32 *)input);
@@ -133,13 +134,22 @@ kCommandHandler(CondWrite8) {
         *(u8 *)address = value & 0xFF;
     return input + 8;
 }
+kCommandHandler(WriteRange) {
+    u32 size = *(const u32 *)input;
+    // skip 1, 2, or 3 bytes to align to 4
+    u32 startOfBuffer = (u32)input + 4 + (address & 3);
+    funcs->memcpy((void *)address, (const void *)(startOfBuffer), (size_t)size);
+    u32 endOfBuffer = startOfBuffer + size;
+    // skip 1, 2, or 3 bytes to align to 4
+    return (const u8 *)((endOfBuffer + 3) & ~3);
+}
 kCommandHandler(Branch) {
     *(u32 *)address = 0x48000000;
-    return kHandleRel24(input, text, address);
+    return kHandleRel24(input, text, address, funcs);
 }
 kCommandHandler(BranchLink) {
     *(u32 *)address = 0x48000001;
-    return kHandleRel24(input, text, address);
+    return kHandleRel24(input, text, address, funcs);
 }
 
 
@@ -218,6 +228,7 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
             kDispatchCommand(CondWrite32);
             kDispatchCommand(CondWrite16);
             kDispatchCommand(CondWrite8);
+            kDispatchCommand(WriteRange);
             kDispatchCommand(Branch);
             kDispatchCommand(BranchLink);
             default:
