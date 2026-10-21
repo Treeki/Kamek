@@ -358,11 +358,14 @@ namespace Kamek
             file.WriteLine("Kamek Binary Map");
             file.WriteLine("  Offset   Size   Name");
 
-            foreach (var s in _globalSymbols.OrderBy(x => x.Value.address.Value))
+            foreach (var s in _globalSymbols
+                .Concat(_localSymbols.SelectMany(it => it.Value))
+                .OrderBy(it => it.Value.address.Value)
+                .Where(it => it.Value.size > 0))
             {
-                String name = s.Key;
-                Symbol sym = s.Value;
-                file.WriteLine(String.Format("  {0:X8} {1:X6} {2}", sym.address.Value, sym.size, name));
+                string name = s.Key;
+                Symbol symbol = s.Value;
+                file.WriteLine(string.Format("  {0:X8} {1:X6} {2}", symbol.address.Value, symbol.size, name));
             }
         }
         #endregion
