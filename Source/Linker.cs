@@ -359,9 +359,9 @@ namespace Kamek
             file.WriteLine("  Offset   Size   Name");
 
             foreach (var s in _globalSymbols
-                .Concat(_localSymbols.SelectMany(it => it.Value))
-                .OrderBy(it => it.Value.address.Value)
-                .Where(it => it.Value.size > 0))
+                .Concat(_localSymbols.SelectMany(it => it.Value)
+                    .Where(it => !(it.Value.address.Value == 0 && it.Value.size == 0)))
+                .OrderBy(it => it.Value.address.Value))
             {
                 string name = s.Key;
                 Symbol symbol = s.Value;
