@@ -1,0 +1,6 @@
+<memory offset="0x80000000" value="48000004" />
+<memory offset="0x80000010" value="48FFFFF0" />
+<memory offset="0x80000020" value="49FFFFE0" />
+<memory offset="0x81000010" value="4B000024" />
+<memory offset="0x81000020" value="4BFFFFE0" />
+<memory offset="0x81000030" value="48FFFFD0" />
