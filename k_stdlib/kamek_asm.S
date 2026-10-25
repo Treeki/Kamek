@@ -4,6 +4,10 @@ kctInjectBranch .equ 3
 kctInjectCall .equ 4
 kctPatchExit .equ 5
 
+KM_INJECT_STRIP_BLR_PAST .equ 0x1
+KM_INJECT_ADD_PADDING .equ 0x2
+
+
 // general hook definition macros
 kmHook0: .macro type
 	.section .kamek
@@ -103,9 +107,6 @@ kmWrite8: .macro addr, value
 kmWriteFloat: .macro addr, value
 	kmHook_2ui_1f kctWrite, 2, addr, value
 	.endm
-kmWriteNop: .macro addr
-	kmWrite32 addr, 0x60000000
-	.endm
 
 // kmBranch, kmCall
 //   Set up a branch from a specific instruction to a specific address
@@ -130,6 +131,56 @@ kmBranchDef: .macro addr
 kmCallDef: .macro addr
 	kmCall addr, __kUserFuncCall\@
 	__kUserFuncCall\@:
+	.endm
+
+// kmWriteDefStart startAddr[, endAddr[, flags[, pad]]]
+// kmWriteDefEnd
+//   Inject assembly code directly into the target executable, overwriting
+//   whatever's there. startAddr and endAddr are the addresses of the first and
+//   last instructions to replace.
+//   - If endAddr is omitted, it defaults to startAddr.
+//   - flags specifies options. Default is `KM_INJECT_STRIP_BLR_PAST | KM_INJECT_ADD_PADDING`.
+//   - pad is the value to fill extra space with if KM_INJECT_ADD_PADDING is set.
+//     Default is nop (0x60000000).
+kmWriteDefStart: .macro startAddr, endAddr, flags, pad
+	.section .km_inject_\@_meta
+	_kInjectionMeta\@: .long 4, startAddr
+	.if narg >= 2
+		.long endAddr
+	.else
+		.long startAddr
+	.endif
+	.if narg >= 3
+		.long flags
+	.else
+		.long KM_INJECT_STRIP_BLR_PAST | KM_INJECT_ADD_PADDING
+	.endif
+	.if narg >= 4
+		.long pad
+	.else
+		.long 0x60000000
+	.endif
+	.previous
+	.section .discard
+	li r0, (_kInjectionMeta\@)@l    // reference to prevent CodeWarrior from deleting the symbol
+	li r0, (__kUserFuncInject\@)@l  // ditto
+	.previous
+	.section .km_inject_\@
+	__kUserFuncInject\@:
+	.endm
+kmWriteDefEnd: .macro
+	.previous
+	.endm
+
+// kmWriteNop, kmWriteNops
+//   Write one or more nop instructions to an address or address range
+kmWriteNop: .macro addr
+	kmWrite32 addr, 0x60000000
+	.endm
+kmWriteNops: .macro startAddr, endAddr
+	kmWriteDefStart startAddr, endAddr
+	nop
+	kmWriteDefEnd
 	.endm
 
 // kamek_b, kamek_bl
