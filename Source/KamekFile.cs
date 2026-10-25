@@ -146,8 +146,8 @@ namespace Kamek
             {
                 using (var bw = new BinaryWriter(ms))
                 {
-                    bw.WriteBE((uint)0x4B616D65); // 'Kamek\0\0\2'
-                    bw.WriteBE((uint)0x6B000002);
+                    bw.WriteBE((uint)0x4B616D65); // 'Kamek\0\0\3'
+                    bw.WriteBE((uint)0x6B000003);
                     bw.WriteBE((uint)_bssSize);
                     bw.WriteBE((uint)_codeBlob.Length);
                     bw.WriteBE((uint)_ctorStart);

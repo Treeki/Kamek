@@ -10,61 +10,64 @@ namespace Kamek.Commands
     class BranchCommand : Command
     {
         public readonly Word Target;
+        public readonly Word? Original;
 
-        public BranchCommand(Word source, Word target, bool isLink)
-            : base(isLink ? Ids.BranchLink : Ids.Branch, source)
+        private static Ids IdFromFlags(bool isLink, bool isConditional)
+        {
+            if (isConditional)
+                return isLink ? Ids.CondBranchLink : Ids.CondBranch;
+            else
+                return isLink ? Ids.BranchLink : Ids.Branch;
+
+            throw new NotImplementedException();
+        }
+
+        public BranchCommand(Word source, Word target, Word? original, bool isLink)
+            : base(IdFromFlags(isLink, original.HasValue), source)
         {
             Target = target;
+            Original = original;
         }
 
         public override void WriteArguments(BinaryWriter bw)
         {
             Target.AssertNotAmbiguous();
             bw.WriteBE(Target.Value);
+
+            if (Original.HasValue)
+            {
+                Original.Value.AssertNotRelative();
+                bw.WriteBE(Original.Value.Value);
+            }
         }
 
         public override IEnumerable<string> PackForRiivolution()
         {
-            Address.Value.AssertAbsolute();
-            Target.AssertAbsolute();
-
-            return new string[] { string.Format("<memory offset=\"0x{0:X8}\" value=\"{1:X8}\" />", Address.Value.Value, GenerateInstruction()) };
+            return GenerateWriteCommand().PackForRiivolution();
         }
 
         public override IEnumerable<string> PackForDolphin()
         {
-            Address.Value.AssertAbsolute();
-            Target.AssertAbsolute();
-
-            return new string[] { string.Format("0x{0:X8}:dword:0x{1:X8}", Address.Value.Value, GenerateInstruction()) };
+            return GenerateWriteCommand().PackForDolphin();
         }
 
         public override IEnumerable<ulong> PackGeckoCodes()
         {
-            Address.Value.AssertAbsolute();
-            Target.AssertAbsolute();
-
-            ulong code = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | GenerateInstruction();
-            code |= 0x4000000UL << 32;
-
-            return new ulong[1] { code };
+            return GenerateWriteCommand().PackGeckoCodes();
         }
 
         public override IEnumerable<ulong> PackActionReplayCodes()
         {
-            Address.Value.AssertAbsolute();
-            Target.AssertAbsolute();
-
-            ulong code = ((ulong)(Address.Value.Value & 0x1FFFFFF) << 32) | GenerateInstruction();
-            code |= 0x4000000UL << 32;
-
-            return new ulong[1] { code };
+            return GenerateWriteCommand().PackActionReplayCodes();
         }
 
         public override bool Apply(KamekFile file)
         {
             if (file.Contains(Address.Value) && Address.Value.Type == Target.Type)
             {
+                if (Original.HasValue && file.ReadUInt32(Address.Value) != Original.Value.Value)
+                    return true;
+
                 file.WriteUInt32(Address.Value, GenerateInstruction());
                 return true;
             }
@@ -74,19 +77,31 @@ namespace Kamek.Commands
 
         public override void ApplyToCodeFile(CodeFiles.CodeFile file)
         {
-            Address.Value.AssertAbsolute();
-            Target.AssertAbsolute();
-
-            file.WriteUInt32(Address.Value.Value, GenerateInstruction());
+            GenerateWriteCommand().ApplyToCodeFile(file);
         }
 
+
+        private WriteCommand GenerateWriteCommand()
+        {
+            Target.AssertAbsolute();
+            return new WriteCommand(
+                Address.Value,
+                new Word(WordType.Value, GenerateInstruction()),
+                WriteCommand.Type.Value32,
+                Original);
+        }
 
         private uint GenerateInstruction()
         {
             long delta = Target - Address.Value;
-            uint insn = (Id == Ids.BranchLink) ? 0x48000001U : 0x48000000U;
+            uint insn = IsLink() ? 0x48000001U : 0x48000000U;
             insn |= ((uint)delta & 0x3FFFFFC);
             return insn;
+        }
+
+        private bool IsLink()
+        {
+            return Id == Ids.BranchLink || Id == Ids.CondBranchLink;
         }
     }
 }

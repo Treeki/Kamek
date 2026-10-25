@@ -20,6 +20,8 @@
 #define kctInjectBranch 3
 #define kctInjectCall 4
 #define kctPatchExit 5
+#define kctInjectConditionalBranch 6
+#define kctInjectConditionalCall 7
 
 
 #define kmIdentifier(key, counter) \
@@ -79,6 +81,11 @@ struct _kmHook_4ui_2f_t { unsigned int a; unsigned int b; unsigned int c; unsign
 //   Set up a branch from a specific instruction to a specific address
 #define kmBranch(addr, ptr) kmHook2(kctInjectBranch, (addr), (ptr))
 #define kmCall(addr, ptr) kmHook2(kctInjectCall, (addr), (ptr))
+
+// kmCondBranch, kmCondCall
+//   Set up a branch from a specific instruction to a specific address, conditionally
+#define kmCondBranch(addr, original, ptr) kmHook3(kctInjectConditionalBranch, (addr), (ptr), (original))
+#define kmCondCall(addr, original, ptr) kmHook3(kctInjectConditionalCall, (addr), (ptr), (original))
 
 // kmBranchDefCpp, kmBranchDefAsm
 //   Set up a branch (b) from a specific instruction to a function defined
