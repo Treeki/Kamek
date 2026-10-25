@@ -25,14 +25,14 @@
 #define kmIdentifier(key, counter) \
 	_k##key##counter
 #define kmHookInt(counter) \
-	__declspec (section ".kamek") static const unsigned int kmIdentifier(Hook, counter)
+	__declspec (section ".kamek") __attribute__((used, force_active)) static const unsigned int kmIdentifier(Hook, counter)
 
 struct _kmHook_4ui_1f_t { unsigned int a; unsigned int b; unsigned int c; unsigned int d; float e; };
 #define _kmHook_4ui_1f(counter) \
-	__declspec (section ".kamek") static const _kmHook_4ui_1f_t kmIdentifier(Hook, counter)
+	__declspec (section ".kamek") __attribute__((used, force_active)) static const _kmHook_4ui_1f_t kmIdentifier(Hook, counter)
 struct _kmHook_4ui_2f_t { unsigned int a; unsigned int b; unsigned int c; unsigned int d; float e; float f; };
 #define _kmHook_4ui_2f(counter) \
-	__declspec (section ".kamek") static const _kmHook_4ui_2f_t kmIdentifier(Hook, counter)
+	__declspec (section ".kamek") __attribute__((used, force_active)) static const _kmHook_4ui_2f_t kmIdentifier(Hook, counter)
 
 // general hook definition macros
 // TODO: debugging data (file, line, ...) for diagnostic use by Kamek maybe? :3
