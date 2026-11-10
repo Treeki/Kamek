@@ -209,7 +209,7 @@ namespace Kamek
                 if (outputARPath != null)
                     File.WriteAllText(outputARPath.Replace("$KV$", version.Key), kf.PackActionReplayCodes());
                 if (outputCodePath != null)
-                    File.WriteAllBytes(outputCodePath.Replace("$KV$", version.Key), kf.CodeBlob);
+                    File.WriteAllBytes(outputCodePath.Replace("$KV$", version.Key), kf.CodeBlobWithBSS);
 
                 if (outputDolPath != null)
                 {

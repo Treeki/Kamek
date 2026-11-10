@@ -27,6 +27,16 @@ namespace Kamek
         public Word BaseAddress { get { return _baseAddress; } }
         public byte[] CodeBlob { get { return _codeBlob; } }
 
+        public byte[] CodeBlobWithBSS
+        {
+            get
+            {
+                byte[] combined = new byte[_codeBlob.Length + _bssSize];
+                Array.Copy(_codeBlob, 0, combined, 0, _codeBlob.Length);
+                return combined;
+            }
+        }
+
         #region Result Binary Manipulation
         public ushort ReadUInt16(Word addr)
         {
@@ -190,7 +200,9 @@ namespace Kamek
 
             var elements = new List<string>();
 
-            if (_codeBlob.Length > 0)
+            byte[] codeBlobWithBSS = CodeBlobWithBSS;
+
+            if (codeBlobWithBSS.Length > 0)
             {
                 // add the big patch
                 if (valuefilePath != null)
@@ -198,7 +210,7 @@ namespace Kamek
 
                 else
                 {
-                    elements.AddRange(Util.PackLargeWriteForRiivolution(_baseAddress, _codeBlob));
+                    elements.AddRange(Util.PackLargeWriteForRiivolution(_baseAddress, codeBlobWithBSS));
                 }
             }
 
@@ -216,10 +228,12 @@ namespace Kamek
 
             var elements = new List<string>();
 
-            if (_codeBlob.Length > 0)
+            byte[] codeBlobWithBSS = CodeBlobWithBSS;
+
+            if (codeBlobWithBSS.Length > 0)
             {
                 // add the big patch
-                elements.AddRange(Util.PackLargeWriteForDolphin(_baseAddress, _codeBlob));
+                elements.AddRange(Util.PackLargeWriteForDolphin(_baseAddress, codeBlobWithBSS));
             }
 
             // add individual patches
@@ -236,10 +250,12 @@ namespace Kamek
 
             var codes = new List<ulong>();
 
+            byte[] codeBlobWithBSS = CodeBlobWithBSS;
+
             if (_codeBlob.Length > 0)
             {
                 // add the big patch
-                codes.AddRange(Util.PackLargeWriteForGeckoCodes(_baseAddress, _codeBlob));
+                codes.AddRange(Util.PackLargeWriteForGeckoCodes(_baseAddress, codeBlobWithBSS));
             }
 
             // add individual patches
@@ -261,10 +277,12 @@ namespace Kamek
 
             var codes = new List<ulong>();
 
+            byte[] codeBlobWithBSS = CodeBlobWithBSS;
+
             if (_codeBlob.Length > 0)
             {
                 // add the big patch
-                codes.AddRange(Util.PackLargeWriteForActionReplayCodes(_baseAddress, _codeBlob));
+                codes.AddRange(Util.PackLargeWriteForActionReplayCodes(_baseAddress, codeBlobWithBSS));
             }
 
             // add individual patches
@@ -284,7 +302,9 @@ namespace Kamek
             if (_baseAddress.Type == WordType.RelativeAddr)
                 throw new InvalidOperationException("cannot pack a dynamically linked binary into a DOL");
 
-            if (_codeBlob.Length > 0)
+            byte[] codeBlobWithBSS = CodeBlobWithBSS;
+
+            if (codeBlobWithBSS.Length > 0)
             {
                 // find an empty text section
                 int victimSection = -1;
@@ -302,7 +322,7 @@ namespace Kamek
 
                 // throw the code blob into it
                 dol.Sections[victimSection].LoadAddress = _baseAddress.Value;
-                dol.Sections[victimSection].Data = _codeBlob;
+                dol.Sections[victimSection].Data = codeBlobWithBSS;
             }
 
             // apply all patches
