@@ -32,7 +32,7 @@ namespace Kamek
 
             // Parse the command line arguments and do cool things!
             var modules = new List<Elf>();
-            uint? baseAddress = null;
+            uint? baseAddress = null, maxAddress = null;
             string outputKamekPath = null, inputRiivPath = null, outputRiivPath = null, inputDolphinPath = null, outputDolphinPath = null, outputGeckoPath = null, outputARPath = null, outputCodePath = null;
             string inputDolPath = null, outputDolPath = null;
             string inputAlfPath = null, outputAlfPath = null;
@@ -52,9 +52,18 @@ namespace Kamek
                         return;
                     }
                     if (arg == "-dynamic")
+                    {
                         baseAddress = null;
+                        maxAddress = null;
+                    }
                     else if (arg.StartsWith("-static=0x"))
-                        baseAddress = uint.Parse(arg.Substring(10), System.Globalization.NumberStyles.HexNumber);
+                    {
+                        baseAddress = uint.Parse(arg.Substring(10, 8), System.Globalization.NumberStyles.HexNumber);
+                        if (arg.Length == 29 && arg.Substring(18, 3) == "-0x")
+                        {
+                            maxAddress = uint.Parse(arg.Substring(21, 8), System.Globalization.NumberStyles.HexNumber);
+                        }
+                    }
                     else if (arg.StartsWith("-output-kamek="))
                         outputKamekPath = arg.Substring(14);
                     else if (arg.StartsWith("-input-riiv="))
@@ -182,7 +191,7 @@ namespace Kamek
                     linker.AddModule(module);
 
                 if (baseAddress.HasValue)
-                    linker.LinkStatic(baseAddress.Value, externals);
+                    linker.LinkStatic(baseAddress.Value, maxAddress, externals);
                 else
                     linker.LinkDynamic(externals);
 
@@ -280,8 +289,9 @@ namespace Kamek
             Console.WriteLine("  Build Mode (select one; defaults to -dynamic):");
             Console.WriteLine("    -dynamic");
             Console.WriteLine("      generate a dynamically linked Kamek binary for use with the loader");
-            Console.WriteLine("    -static=0x80001900");
+            Console.WriteLine("    -static=0x80001900 or -static=0x80001900-0x80001f00");
             Console.WriteLine("      generate a blob of code which must be loaded at the specified Wii RAM address");
+            Console.WriteLine("      (link will fail if code size would go past the optional upper bound)");
             Console.WriteLine();
             Console.WriteLine("  Game Configuration:");
             Console.WriteLine("    -externals=file.txt");

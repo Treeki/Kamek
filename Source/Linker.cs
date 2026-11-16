@@ -26,9 +26,13 @@ namespace Kamek
             _modules.Add(elf);
         }
 
-        public void LinkStatic(uint baseAddress, Dictionary<string, uint> externalSymbols)
+        public void LinkStatic(uint baseAddress, uint? maxAddress, Dictionary<string, uint> externalSymbols)
         {
             _baseAddress = new Word(WordType.AbsoluteAddr, Mapper.Remap(baseAddress));
+            if (maxAddress.HasValue)
+            {
+                _maxAddress = new Word(WordType.AbsoluteAddr, Mapper.Remap(maxAddress.Value));
+            }
             DoLink(externalSymbols);
         }
         public void LinkDynamic(Dictionary<String, uint> externalSymbols)
@@ -54,6 +58,7 @@ namespace Kamek
         }
 
         private Word _baseAddress;
+        private Word? _maxAddress;
         private Word _initStart, _initEnd;
         private Word _textStart, _textEnd;
         private Word _ctorStart, _ctorEnd;
@@ -66,6 +71,7 @@ namespace Kamek
         private byte[] _memory = null;
 
         public Word BaseAddress { get { return _baseAddress; } }
+        public Word? MaxAddress { get { return _maxAddress; } }
         public Word CtorStart { get { return _ctorStart; } }
         public Word CtorEnd { get { return _ctorEnd; } }
         public Word OutputStart { get { return _outputStart; } }
@@ -143,6 +149,11 @@ namespace Kamek
             _bssStart = location;
             ImportSections(ref blobs, ref location, ".bss");
             _bssEnd = location;
+
+            if (_maxAddress.HasValue && location > _maxAddress.Value)
+            {
+                throw new InvalidDataException("Code exceeds maximum allowed size");
+            }
 
             _kamekStart = location;
             ImportSections(ref blobs, ref location, ".kamek");
