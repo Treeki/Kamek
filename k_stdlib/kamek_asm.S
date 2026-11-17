@@ -3,6 +3,8 @@ kctConditionalWrite .equ 2
 kctInjectBranch .equ 3
 kctInjectCall .equ 4
 kctPatchExit .equ 5
+kctInjectConditionalBranch .equ 6
+kctInjectConditionalCall .equ 7
 
 // general hook definition macros
 kmHook0: .macro type
@@ -114,6 +116,15 @@ kmBranch: .macro addr, ptr
 	.endm
 kmCall: .macro addr, ptr
 	kmHook2 kctInjectCall, addr, ptr
+	.endm
+
+// kmCondBranch, kmCondCall
+//   Set up a branch from a specific instruction to a specific address, conditionally
+kmCondBranch: .macro addr, original, ptr
+	kmHook3 kctInjectConditionalBranch, addr, ptr, original
+	.endm
+kmCondCall: .macro addr, original, ptr
+	kmHook3 kctInjectConditionalCall, addr, ptr, original
 	.endm
 
 // kmBranchDef

@@ -32,6 +32,8 @@ namespace Kamek.Commands
 
             Branch = 64,
             BranchLink = 65,
+            CondBranch = 66,
+            CondBranchLink = 67,
         }
 
         public readonly Ids Id;

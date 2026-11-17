@@ -1,6 +1,6 @@
 #include "kamekLoader.h"
 
-#define KM_FILE_VERSION 2
+#define KM_FILE_VERSION 3
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
 
@@ -39,6 +39,8 @@ struct DVDHandle
 #define kCondWrite8 38
 #define kBranch 64
 #define kBranchLink 65
+#define kCondBranch 66
+#define kCondBranchLink 67
 
 
 void kamekError(const loaderFunctions *funcs, const char *str)
@@ -141,6 +143,18 @@ kCommandHandler(BranchLink) {
     *(u32 *)address = 0x48000001;
     return kHandleRel24(input, text, address);
 }
+kCommandHandler(CondBranch) {
+    u32 original = ((const u32 *)input)[1];
+    if (*(u32 *)address == original)
+        kHandleBranch(input, text, address);
+    return input + 8;
+}
+kCommandHandler(CondBranchLink) {
+    u32 original = ((const u32 *)input)[1];
+    if (*(u32 *)address == original)
+        kHandleBranchLink(input, text, address);
+    return input + 8;
+}
 
 
 inline void cacheInvalidateAddress(u32 address) {
@@ -220,6 +234,8 @@ void loadKamekBinary(const loaderFunctions *funcs, const void *binary, u32 binar
             kDispatchCommand(CondWrite8);
             kDispatchCommand(Branch);
             kDispatchCommand(BranchLink);
+            kDispatchCommand(CondBranch);
+            kDispatchCommand(CondBranchLink);
             default:
                 funcs->OSReport("Unknown command: %d\n", cmd);
         }
