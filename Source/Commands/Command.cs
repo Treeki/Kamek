@@ -29,6 +29,7 @@ namespace Kamek.Commands
             CondWrite32 = 36,
             CondWrite16 = 37,
             CondWrite8 = 38,
+            WriteRange = 39,
 
             Branch = 64,
             BranchLink = 65,

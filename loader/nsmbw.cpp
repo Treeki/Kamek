@@ -7,7 +7,6 @@
 
 typedef void *(*EGG_Heap_alloc_t) (u32 size, s32 align, void *heap);
 typedef void (*EGG_Heap_free_t) (void *buffer, void *heap);
-typedef void *(*memcpy_t) (void *dest, const void *src, size_t count);
 typedef void (*flush_cache_t) (void *buffer, size_t size);
 
 struct loaderFunctionsEx {
@@ -48,11 +47,11 @@ const loaderFunctionsEx functions_P = {
     (DVDReadPrio_t) 0x801CAC60,
     (DVDClose_t) 0x801CAB40,
     (sprintf_t) 0x802E1ACC,
+    (memcpy_t) 0x80004364,
     allocAdapter,
     freeAdapter},
     (EGG_Heap_alloc_t) 0x802B8E00,
     (EGG_Heap_free_t) 0x802B90B0,
-    (memcpy_t) 0x80004364,
     (flush_cache_t) 0x80004330,
     (void **) 0x80377F48,
     (void **) 0x8042A72C,
@@ -67,11 +66,11 @@ const loaderFunctionsEx functions_E = {
     (DVDReadPrio_t) 0x801CAB20,
     (DVDClose_t) 0x801CAA00,
     (sprintf_t) 0x802E17DC,
+    (memcpy_t) 0x80004364,
     allocAdapter,
     freeAdapter},
     (EGG_Heap_alloc_t) 0x802B8CC0,
     (EGG_Heap_free_t) 0x802B8F70,
-    (memcpy_t) 0x80004364,
     (flush_cache_t) 0x80004330,
     (void **) 0x80377C48,
     (void **) 0x8042A44C,
@@ -87,11 +86,11 @@ const loaderFunctionsEx functions_J = {
     (DVDReadPrio_t) 0x801CA930,
     (DVDClose_t) 0x801CA810,
     (sprintf_t) 0x802E15EC,
+    (memcpy_t) 0x80004364,
     allocAdapter,
     freeAdapter},
     (EGG_Heap_alloc_t) 0x802B8AD0,
     (EGG_Heap_free_t) 0x802B8D80,
-    (memcpy_t) 0x80004364,
     (flush_cache_t) 0x80004330,
     (void **) 0x803779C8,
     (void **) 0x8042A16C,
@@ -106,11 +105,11 @@ const loaderFunctionsEx functions_K = {
     (DVDReadPrio_t) 0x801CB060,
     (DVDClose_t) 0x801CAF40,
     (sprintf_t) 0x802E1D1C,
+    (memcpy_t) 0x80004364,
     allocAdapter,
     freeAdapter},
     (EGG_Heap_alloc_t) 0x802B9200,
     (EGG_Heap_free_t) 0x802B94B0,
-    (memcpy_t) 0x80004364,
     (flush_cache_t) 0x80004330,
     (void **) 0x80384948,
     (void **) 0x804370EC,
@@ -125,11 +124,11 @@ const loaderFunctionsEx functions_W = {
     (DVDReadPrio_t) 0x801CB060,
     (DVDClose_t) 0x801CAF40,
     (sprintf_t) 0x802E1D1C,
+    (memcpy_t) 0x80004364,
     allocAdapter,
     freeAdapter},
     (EGG_Heap_alloc_t) 0x802B9200,
     (EGG_Heap_free_t) 0x802B94B0,
-    (memcpy_t) 0x80004364,
     (flush_cache_t) 0x80004330,
     (void **) 0x80382D48,
     (void **) 0x804354EC,
@@ -145,11 +144,11 @@ const loaderFunctionsEx functions_C = {
     (DVDReadPrio_t) 0x801CCE80,
     (DVDClose_t) 0x801CCD60,
     (sprintf_t) 0x802E4DF8,
+    (memcpy_t) 0x80004364,
     allocAdapter,
     freeAdapter},
     (EGG_Heap_alloc_t) 0x802BB360,
     (EGG_Heap_free_t) 0x802BB610,
-    (memcpy_t) 0x80004364,
     (flush_cache_t) 0x80004330,
     (void **) 0x8037D4C8,
     (void **) 0x8042FCCC,
@@ -250,7 +249,7 @@ void loadIntoNSMBW() {
 
     // modify myBackGround_PhaseMethod to load rels earlier & load the kamek binary
     u32 temp[20];
-    sFuncs->memcpy(&temp, sFuncs->myBackGround_PhaseMethod, 0x50);
+    sFuncs->base.memcpy(&temp, sFuncs->myBackGround_PhaseMethod, 0x50);
 
     // set rel loading functions as the first entries in the table
     sFuncs->myBackGround_PhaseMethod[0] = temp[15];
@@ -261,7 +260,7 @@ void loadIntoNSMBW() {
     sFuncs->myBackGround_PhaseMethod[3] = (u32)&loadBinary;
 
     // set all the other functions
-    sFuncs->memcpy(&sFuncs->myBackGround_PhaseMethod[4], &temp, 0x3C);
+    sFuncs->base.memcpy(&sFuncs->myBackGround_PhaseMethod[4], &temp, 0x3C);
     sFuncs->myBackGround_PhaseMethod[19] = temp[18];
     sFuncs->myBackGround_PhaseMethod[20] = temp[19];
 

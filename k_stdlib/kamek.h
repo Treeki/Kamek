@@ -21,6 +21,17 @@
 #define kctInjectCall 4
 #define kctPatchExit 5
 
+// KM_INJECT_STRIP_BLR_PAST (kmWriteDefAsm flag)
+//   If the specified address range has size N, and the compiled code has size
+//   exactly N+4, and the last four bytes are a blr instruction, delete the
+//   instruction instead of raising a link-time error.
+#define KM_INJECT_STRIP_BLR_PAST 0x1
+// KM_INJECT_ADD_PADDING (kmWriteDefAsm flag)
+//   If the specified address range has size N, and the compiled code has size
+//   < N, pad the remaining space with the provided pad value.
+//   (If this flag isn't set, the remaining space is left untouched.)
+#define KM_INJECT_ADD_PADDING 0x2
+
 
 #define kmIdentifier(key, counter) \
 	_k##key##counter
@@ -68,7 +79,6 @@ struct _kmHook_4ui_2f_t { unsigned int a; unsigned int b; unsigned int c; unsign
 #define kmWrite16(addr, value) kmHook3(kctWrite, 3, (addr), (value))
 #define kmWrite8(addr, value) kmHook3(kctWrite, 4, (addr), (value))
 #define kmWriteFloat(addr, value) kmHook_2ui_1f(kctWrite, 2, (addr), (value))
-#define kmWriteNop(addr) kmWrite32((addr), 0x60000000)
 
 // kmPatchExitPoint
 //   Force the end of a Kamek function to always jump to a specific address
@@ -107,5 +117,66 @@ struct _kmHook_4ui_2f_t { unsigned int a; unsigned int b; unsigned int c; unsign
 	kmCallDefInt(__COUNTER__, addr, returnType, __VA_ARGS__)
 #define kmCallDefAsm(addr) \
 	kmCallDefInt(__COUNTER__, addr, asm void, )
+
+#define _kmWriteDefHelper0(pragmaString) _Pragma(#pragmaString)
+#define _kmWriteDefHelper1(secName) \
+	_kmWriteDefHelper0(section data_type sdata_type #secName #secName)
+#define _kmWriteDefHelper2(secName) \
+	_kmWriteDefHelper0(section code_type #secName)
+#define _kmWriteDefHelper3(secName) \
+	__declspec (section #secName)
+
+// kmWriteDefAsm(startAddr[, endAddr[, flags[, pad]]])
+//   Inject assembly code directly into the target executable, overwriting
+//   whatever's there. startAddr and endAddr are the addresses of the first and
+//   last instructions to replace.
+//   - If endAddr is omitted, it defaults to startAddr.
+//   - flags specifies options. Default is `KM_INJECT_STRIP_BLR_PAST | KM_INJECT_ADD_PADDING`.
+//   - pad is the value to fill extra space with if KM_INJECT_ADD_PADDING is set.
+//     Default is nop (0x60000000).
+#define _kmWriteDefAsm3(counter, startAddr, endAddr, flags, pad) \
+	_Pragma("push") \
+	_kmWriteDefHelper1(.km_inject_##counter##_meta) \
+	_kmWriteDefHelper2(.km_inject_##counter) \
+	_kmWriteDefHelper3(.km_inject_##counter##_meta) static const unsigned int kmIdentifier(InjectionMeta, counter) [5] = { 4, (startAddr), (endAddr), (flags), (pad) }; \
+	_kmWriteDefHelper3(.km_inject_##counter) static void kmIdentifier(UserFunc, counter) (); \
+	_Pragma("pop") \
+	static asm void kmIdentifier(UserFunc, counter) ()
+#define _get1stArg(_1, ...) _1
+#define _get2ndArg(_1, _2, ...) _2
+#define _get3rdArg(_1, _2, _3, ...) _3
+#define _get4thArg(_1, _2, _3, _4, ...) _4
+#define _kmWriteDefAsm2(counter, ...) \
+	_kmWriteDefAsm3( \
+		counter, \
+		_get1stArg(__VA_ARGS__, 0), \
+		_get2ndArg(__VA_ARGS__, _get1stArg(__VA_ARGS__, 0), 0), \
+		_get3rdArg(__VA_ARGS__, KM_INJECT_STRIP_BLR_PAST|KM_INJECT_ADD_PADDING, KM_INJECT_STRIP_BLR_PAST|KM_INJECT_ADD_PADDING, 0), \
+		_get4thArg(__VA_ARGS__, 0x60000000, 0x60000000, 0x60000000, 0) \
+	)
+#define kmWriteDefAsm(...) \
+	_kmWriteDefAsm2(__COUNTER__, __VA_ARGS__)
+
+// kmWriteDefCpp
+//   Inject a function defined directly underneath into the target executable,
+//   overwriting whatever function is already there. startAddr and endAddr are
+//   the addresses of the first instruction to replace and the last instruction
+//   that *can* be replaced, respectively.
+#define _kmWriteDefCpp2(counter, startAddr, endAddr, returnType, ...) \
+	_Pragma("push") \
+	_kmWriteDefHelper1(.km_inject_##counter##_meta) \
+	_kmWriteDefHelper2(.km_inject_##counter) \
+	_kmWriteDefHelper3(.km_inject_##counter##_meta) static const unsigned int kmIdentifier(InjectionMeta, counter) [5] = { 4, (startAddr), (endAddr), 0, 0 }; \
+	_kmWriteDefHelper3(.km_inject_##counter) static returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__); \
+	_Pragma("pop") \
+	static returnType kmIdentifier(UserFunc, counter) (__VA_ARGS__)
+#define kmWriteDefCpp(startAddr, endAddr, returnType, ...) \
+	_kmWriteDefCpp2(__COUNTER__, startAddr, endAddr, returnType, __VA_ARGS__)
+
+// kmWriteNop, kmWriteNops
+//   Write one or more nop instructions to an address or address range
+#define kmWriteNop(addr) kmWrite32((addr), 0x60000000)
+#define kmWriteNops(startAddr, endAddr) \
+	kmWriteDefAsm((startAddr), (endAddr)) { nofralloc; nop }
 
 #endif

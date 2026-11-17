@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Kamek.Commands
 {
-    class WriteCommand : Command
+    class WriteWordCommand : Command
     {
         public enum Type
         {
@@ -49,7 +49,7 @@ namespace Kamek.Commands
         public readonly Word Value;
         public readonly Word? Original;
 
-        public WriteCommand(Word address, Word value, Type valueType, Word? original)
+        public WriteWordCommand(Word address, Word value, Type valueType, Word? original)
             : base(IdFromType(valueType, original.HasValue), address)
         {
             Value = value;

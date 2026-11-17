@@ -37,6 +37,8 @@ if (first8 == 0x4b616d656b000001) {  // "Kamek", version 1
     version = 1;
 } else if (first8 == 0x4b616d656b000002) {  // "Kamek", version 2
     version = 2;
+} else if (first8 == 0x4b616d656b000003) {  // "Kamek", version 3
+    version = 3;
 } else {
     Warning("Not a Kamekfile.");
     return;
@@ -57,6 +59,7 @@ enum <uint8> CommandType {
     kCondWrite32 = 36,
     kCondWrite16 = 37,
     kCondWrite8 = 38,
+    kWriteRange = 39,  // added in version >= 3
     kBranch = 64,
     kBranchLink = 65,
 };
@@ -95,11 +98,15 @@ typedef struct {
     }
 } DestAddress <read=readDestAddress>;
 
+string formatDestAddress(int isAbsolute, uint32 addr) {
+    return Str(isAbsolute ? "0x%x" : "<code+0x%x>", addr);
+}
+
 string readDestAddress(DestAddress &value) {
     if (value.isAbsolute) {
-        return Str("0x%x", value.absAddr);
+        return formatDestAddress(true, value.absAddr);
     } else {
-        return Str("<code+0x%x>", readUint24(value.relAddr));
+        return formatDestAddress(false, readUint24(value.relAddr));
     }
 }
 
@@ -205,6 +212,16 @@ typedef struct {
         uint8 original <name="Original", read=formatHex>;
         valueStr = Str("kmCondWrite8(%s, %s, %s)",
             readDestAddress(dest), formatHex(original), formatHex(value));
+        break;
+    case kWriteRange:
+        uint32 size <name="Size", read=formatHex>;
+        local uint32 startAddr = dest.isAbsolute ? dest.absAddr : dest.relAddr;
+        local uint32 endAddr = startAddr + size;
+        FSkip(startAddr & 3);
+        byte data[size] <name="Data", open=suppress>;
+        FSkip((4 - endAddr) & 3);
+        valueStr = Str("kmWriteRange(%s, %s) {...}",
+            readDestAddress(dest), formatDestAddress(dest.isAbsolute, endAddr - 1));
         break;
     case kBranch:
         SrcAddress src <name="Src. Address", read=readSrcAddress(this, kRel24)>;
