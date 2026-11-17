@@ -1,0 +1,20 @@
+<memory offset="0x82000000" value="00000000" />
+<memory offset="0x80000000" value="80000008" original="80000004" />
+<memory offset="0x80000010" value="81000000" original="80000014" />
+<memory offset="0x80000020" value="82000000" original="80000024" />
+<memory offset="0x80000030" value="80000038" original="81000000" />
+<memory offset="0x80000040" value="81000000" original="81000000" />
+<memory offset="0x80000050" value="82000000" original="81000000" />
+<memory offset="0x80000100" value="22222222" original="11111111" />
+<memory offset="0x80000110" value="4444" original="3333" />
+<memory offset="0x80000120" value="66" original="55" />
+<memory offset="0x80000130" value="410CCCCD" original="40F66666" />
+<memory offset="0x80000140" value="60000000" original="99999999" />
+<memory offset="0x80000200" value="80000204" />
+<memory offset="0x80000210" value="81000000" />
+<memory offset="0x80000220" value="82000000" />
+<memory offset="0x80000300" value="11111111" />
+<memory offset="0x80000310" value="2222" />
+<memory offset="0x80000320" value="33" />
+<memory offset="0x80000330" value="408CCCCD" />
+<memory offset="0x80000340" value="60000000" />

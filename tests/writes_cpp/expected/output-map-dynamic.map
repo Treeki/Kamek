@@ -1,0 +1,17 @@
+Kamek Binary Map
+  Offset   Size   Name
+  00000000 000000 __ctor_loc
+  00000000 000000 __ctor_end
+  00000000 000000 _f_init
+  00000000 000000 _e_init
+  00000000 000000 _f_text
+  00000000 000000 _e_text
+  00000000 000000 _f_ctors
+  00000000 000000 _e_ctors
+  00000000 000000 _f_dtors
+  00000000 000000 _e_dtors
+  00000000 000000 _f_rodata
+  00000000 000000 _e_rodata
+  00000000 000000 _f_data
+  00000000 000000 _e_data
+  00000000 000004 localSym

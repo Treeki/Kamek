@@ -1,0 +1,5 @@
+externalSym=0x81000000
+externalFunc01=0x81000010
+externalFunc02=0x81000020
+externalFunc03=0x81000030
+externalFunc04=0x81000040
